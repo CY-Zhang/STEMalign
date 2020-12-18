@@ -232,6 +232,7 @@ class BayesOpt:
     
         # get next point to try using acquisition function
         x_next = self.acquire()
+        print(x_next)
         if(self.acq_func[0] == 'testEI'):
             ind = x_next
             x_next = np.array(self.acq_func[2].iloc[ind,:-1],ndmin=2)
@@ -296,6 +297,7 @@ class BayesOpt:
         self.x_best = x_best
         x_curr = self.current_x[-1]
         x_start = x_best
+        print(x_start)
             
         ndim = x_curr.size # dimension of the feature space we're searching NEEDED FOR UCB
         try:
@@ -429,10 +431,10 @@ class BayesOpt:
                     res = basinhopping(aqfcn, x_start,niter=niter,niter_success=niter_success, minimizer_kwargs={'method':optmethod,'args':(self.model, y_best, self.acq_func[1], alpha),'tol':tolerance,'bounds':iter_bounds,'options':{'maxiter':maxiter}})
 
                 else:
-                    res = minimize(aqfcn, x_start, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
-
+                    # res = minimize(aqfcn, x_start, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    res = minimize(aqfcn, x_start, args=(self.model, ndim, niter, 2.0, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
                 res = res.x
-                
+                print(res)
         except:
             raise
         return np.array(res,ndmin=2) # return resulting x value as a (1 x dim) vector
@@ -499,6 +501,7 @@ def negUCB(x_new, model, ndim, nsteps, nu = 1., delta = 1.):
     else:
         tau = 2.*np.log(nsteps**(0.5*ndim+2.)*(np.pi**2.)/3./delta)
         GPUCB = y_mean + np.sqrt(nu * tau * y_var)
+    GPUCB = np.squeeze(GPUCB)
 
     return -GPUCB
 
