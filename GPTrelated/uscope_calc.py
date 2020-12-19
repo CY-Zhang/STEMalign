@@ -100,7 +100,7 @@ def sim(S0    = params["sol0nI"],
     cmdB = "{} -o {} {}".format(EXETXT, ASCIIFILE, GDFFILE)
     os.system(cmdA)
     os.system(cmdB)
-    print(ASCIIFILE)
+    # print(ASCIIFILE)
     screen =  np.loadtxt(ASCIIFILE, skiprows=5)
     
     x  = screen[:,0]
