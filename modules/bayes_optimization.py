@@ -232,7 +232,6 @@ class BayesOpt:
     
         # get next point to try using acquisition function
         x_next = self.acquire()
-        print(x_next)
         if(self.acq_func[0] == 'testEI'):
             ind = x_next
             x_next = np.array(self.acq_func[2].iloc[ind,:-1],ndmin=2)
@@ -243,6 +242,7 @@ class BayesOpt:
             (x_new, y_new) = (x_next, self.acq_func[2].iloc[ind,-1])
         else:
             (x_new, y_new) = self.mi.getState()
+        print('New State: ' + str(x_new) + ', ' + str(y_new))
         # add new entry to observed data
         self.X_obs = np.concatenate((self.X_obs,x_new),axis=0)
         self.Y_obs.append(y_new)
@@ -294,6 +294,7 @@ class BayesOpt:
         """
         # look from best positions
         (x_best, y_best) = self.best_seen()
+        print(x_best, y_best)
         self.x_best = x_best
         x_curr = self.current_x[-1]
         x_start = x_best
@@ -419,22 +420,26 @@ class BayesOpt:
                     # use basinhopping
                     bkwargs = dict(niter=niter,niter_success=niter_success, minimizer_kwargs={'method':optmethod,'args':fargs,'tol':tolerance,'bounds':iter_bounds,'options':{'maxiter':maxiter}}) # keyword args for basinhopping
                     res = parallelbasinhopping(aqfcn,x0s,bkwargs)
+                    print('multi-processing, basinhopping')
 
                 else:
                     # use minimize
                     mkwargs = dict(bounds=iter_bounds, method=optmethod, options={'maxiter':maxiter}, tol=tolerance) # keyword args for scipy.optimize.minimize
                     res = parallelminimize(aqfcn,x0s,fargs,mkwargs,v0best,relative_bounds=relative_bounds)
+                    print('multi-processing, minimize')
 
             else: # single-processing
 
                 if basinhoppingQ:
                     res = basinhopping(aqfcn, x_start,niter=niter,niter_success=niter_success, minimizer_kwargs={'method':optmethod,'args':(self.model, y_best, self.acq_func[1], alpha),'tol':tolerance,'bounds':iter_bounds,'options':{'maxiter':maxiter}})
-
+                    print('single-processing, basinhopping')
                 else:
-                    # res = minimize(aqfcn, x_start, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
-                    res = minimize(aqfcn, x_start, args=(self.model, ndim, niter, 2.0, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    # res = minimize(aqfcn, x_start - 0.00001, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    iter_bounds = [(-10,10)]
+                    res = minimize(aqfcn, x_start - 0.001, args=(self.model, ndim, niter, 2, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    print('single-processing, minimize, x_start = '+ str(x_start))
                 res = res.x
-                print(res)
+                print('Minimizing finished, min point = ' + str(res))
         except:
             raise
         return np.array(res,ndmin=2) # return resulting x value as a (1 x dim) vector

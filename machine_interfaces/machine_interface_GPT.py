@@ -17,29 +17,48 @@ class machine_interface:
             self.setX(start_point)
 
     def setX(self, x_new):
-        self.x = np.array(x_new, ndmin=2)
+        self.x = np.array(x_new, ndmin=1)
         # add expressions to set machine ctrl pvs to the position called self.x -- Note: self.x is a 2-dimensional array of shape (1, ndim). To get the values as a 1d-array, use self.x[0]
 
     def getState(self): 
         ASCIIFILE = '/home/cz489/STEMalign_BO/outscope.txt'
+        PNGFILE = '/home/cz489/STEMalign_BO/ronchigram.npy'
         MConHBAR  =  2.59e12
-        maxsig = 2  # determine how many standard deviations are we going to plot
+        maxsig = 1  # determine how many standard deviations are we going to plot
+                    # use +/- 1 standard deviation for now, maxsig = 2 works well when the probe is bad, but could generate emply plot 
+                    # when the probe is well focused (??)
 
-        sim(
-             H1    = self.x[0][0], #0.2, #-2.9,
-             H2    = self.x[0][1], #0.2, #-2.9,
-             S0    = 0.0,
-             Obj   = 1.30306, #1.30305,
-             alpha = 2.0e-5, #1.1e-5
-             seed  = 0,
-             erL   = 0.0,
-             erTh  = 0.0
-             )
-        print('simulation finished')
+        shadow = sim(
+                H1    = self.x[0][0],
+                H2    = 0.0,
+                S0    = 0.0,
+                S3    = 330668.75, # 3.3066875e5
+                S4    = 330598.75, # 3.3066875e5
+                S5    = -330668.75,
+                S6    = -330538.75,
+                Obj   = 1.30305, #1.30305,
+                alpha = 2.0e-5, #1.1e-5
+                seed  = 0,
+                erL   = 0.0,
+                erTh  = 0.0
+             )      # the parameters that are not given an value here would be set to the default values, which could be found in uscope.py
+                    # the sim function would return the Ronchigram, and save the outscope.txt file to the path that was calling this function
+                    # i.e. the path of the Jupyte Notebook
+                # H1    = self.x[0][0], #0.2, #-2.9,
+                # H2    = self.x[0][1], #0.2, #-2.9,
 
-        # check whether outscope file is ready
+        # check whether outscope file is ready in the path defined above
         if ~os.path.exists(ASCIIFILE):
             time.sleep(1)
+
+        # number of pixels that will be used to generate x-y and kx-ky grid
+        N = 24
+
+        # build a circular mask
+        x_grid, y_grid = np.meshgrid(np.linspace(-N/2, N/2, N),
+                             np.linspace(-N/2, N/2, N))
+        temp = x_grid * x_grid + y_grid * y_grid
+        mask =temp < N*N/4
 
         # process the simulated results from outscope.txt, then remove the file
         screen =  np.loadtxt(ASCIIFILE, skiprows=5)
@@ -54,8 +73,6 @@ class machine_interface:
 
         meany = np.mean(y)
         sigy  = np.std(y)
-
-        N = 24
 
         kx_bins = [[[] for n in range(0,N)] for m in range(0,N)]
         ky_bins = [[[] for n in range(0,N)] for m in range(0,N)]
@@ -78,6 +95,17 @@ class machine_interface:
             for j in range(0, N):
                 kx_grid[i,j] = np.mean(kx_bins[i][j])
                 ky_grid[i,j] = np.mean(ky_bins[i][j])
+        # remove the points in the mesh grid that did not collect any electron, then perform linear fit between kx and 
+        # this should guarantee a non-nan fitting results of a and b, but the fitting result might be inaccurate.
+        idx = np.where(np.isnan(kx_grid[12,:])==False)
+        a, b = np.polyfit(x_grid[12,idx][0], kx_grid[12,idx][0], 1)
+
+        if np.isnan(a) or np.isnan(b):  # if the fitting fail
+            return np.array(self.x, ndmin = 2), np.array([[np.inf]])
+
+
+        kx_grid = kx_grid - a * x_grid
+        ky_grid = ky_grid - a * y_grid
         k_abs = np.power(np.power(kx_grid, 2) + np.power(ky_grid, 2), 0.5)
 
         # calculate emittance
@@ -87,14 +115,15 @@ class machine_interface:
         emit = emit_1 * emit_2 - emit_3
 
         # return objective state as teh sum of emittance
-        objective_state = np.log(np.sum(emit[~np.isnan(kx_grid)]))
+        emit[np.isnan(emit)] = 0
+        objective_state = -np.sum(emit*mask)
         # print(objective_state)
-
+        np.save(PNGFILE, shadow)
         # save Ronchigram figure as a reference of tuning
         # fig = plt.figure()
         # plt.imshow(shadow)
         # plt.savefig('ronchigram.png')
-        # os.remove(ASCIIFILE)
+        os.remove(ASCIIFILE)
 
         return np.array(self.x, ndmin = 2), np.array([[objective_state]])
     

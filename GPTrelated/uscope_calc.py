@@ -98,6 +98,8 @@ def sim(S0    = params["sol0nI"],
           [S0, S1, S1CH, S2CV, S2, S2CH, S2CV, H1, S3, S3CH, S3CV, S4, S4CH, S4CV, H2, S5, S5CH, S5CV, S6, S6CH, S6CV, Obj, ObjCH, ObjCV, alpha])]), 
           "".join(["{}={} ".format(s, t) for x, y in zip(errornames, errors) for s, t in zip(x, y)]))
     cmdB = "{} -o {} {}".format(EXETXT, ASCIIFILE, GDFFILE)
+    if os.path.exists(ASCIIFILE):
+      os.remove(ASCIIFILE)
     os.system(cmdA)
     os.system(cmdB)
     # print(ASCIIFILE)
