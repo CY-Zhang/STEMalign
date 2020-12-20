@@ -435,7 +435,7 @@ class BayesOpt:
                     print('single-processing, basinhopping')
                 else:
                     # res = minimize(aqfcn, x_start - 0.00001, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
-                    iter_bounds = [(-10,10)]
+                    iter_bounds = [(-10,10)]  # hard coded boundary for now.
                     res = minimize(aqfcn, x_start - 0.001, args=(self.model, ndim, niter, 2, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
                     print('single-processing, minimize, x_start = '+ str(x_start))
                 res = res.x
