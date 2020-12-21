@@ -30,7 +30,8 @@ class machine_interface:
 
         shadow = sim(
                 H1    = self.x[0][0],
-                H2    = 0.0,
+                H2    = self.x[0][1],
+                # H2    = 0.0,
                 S0    = 0.0,
                 S3    = 330668.75, # 3.3066875e5
                 S4    = 330598.75, # 3.3066875e5
@@ -114,9 +115,10 @@ class machine_interface:
         emit_3 = kx_grid * x_grid + ky_grid * y_grid  # third term, cross term between x/y and gradient along x/y
         emit = emit_1 * emit_2 - emit_3
 
-        # return objective state as teh sum of emittance
+        # return objective state as the negative sum of emittance
+        # negative sum of emit is used as the BO will maximize the objective state, as a result of using the negative UCB as acquisition func
         emit[np.isnan(emit)] = 0
-        objective_state = -np.sum(emit*mask)
+        objective_state = -np.sum(emit*mask)   
         # print(objective_state)
         np.save(PNGFILE, shadow)
         # save Ronchigram figure as a reference of tuning
