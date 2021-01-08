@@ -249,6 +249,8 @@ class BayesOpt:
         
         # update the model (may want to add noise if using testEI)
         self.model.update(x_new, y_new)# + .5*np.random.randn())
+
+        return x_new, y_new
             
             
     def ForcePoint(self,x_next):
@@ -435,8 +437,10 @@ class BayesOpt:
                     print('single-processing, basinhopping')
                 else:
                     # res = minimize(aqfcn, x_start - 0.00001, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
-                    iter_bounds = [(-10,10)]  # hard coded boundary for now.
-                    res = minimize(aqfcn, x_start - 0.001, args=(self.model, ndim, niter, 2, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    iter_bounds = [(-6,6),(-10,10)]  # hard coded boundary for now.
+                    rs = np.random.RandomState()
+                    x_start = [x+(rs.random()-0.5) for x in x_start]
+                    res = minimize(aqfcn, x_start, args=(self.model, ndim, 1, 2, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
                     print('single-processing, minimize, x_start = '+ str(x_start))
                 res = res.x
                 print('Minimizing finished, min point = ' + str(res))

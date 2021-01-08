@@ -8,8 +8,8 @@ from scipy.ndimage.filters import gaussian_filter
 #                                      the input to sim() is a list of  magnet strengths,
 shadow, x_grid, y_grid, kx_grid, ky_grid = sim(
 	S0    = 0.0,
-    H1    = 0.0, #0.2, #-2.9,
-    H2    = 3.0, #0.2, #-2.9,
+    H1    = -30.0, #0.2, #-2.9,
+    H2    = 30.0, #0.2, #-2.9,
     S3    = 330668.75, # 3.3066875e5
     S4    = 330598.75, # 3.3066875e5
     S5    = -330668.75,
