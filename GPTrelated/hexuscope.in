@@ -42,11 +42,11 @@ csol4L   = 5.0e-3;
 ###
 
 hex1pos =  0.0;
-hex1L   =  1.2; # Hex1L and hex2L are 0.1m by default
+hex1L   =  0.1;
 #hex1G   =  -25.0; #-8; #4.0; #1e5;
 
 hex2pos =  0.19;
-hex2L   =  1.2;
+hex2L   =  0.1;
 #hex2G   =  25.0; #8; #-4.0; #-1e5;
 
 ######
@@ -111,7 +111,7 @@ sextupole("wcs", hex1ox, hex1oy, hex1oz + hex1pos,
                  hex1xx, hex1xy, hex1xz,     
                  hex1yx, hex1yy, hex1yz,     
                  hex1L,  hex1G);
-sextupole("wcs", hex2ox, hex2oy, hex2oz + hex1pos, 
+sextupole("wcs", hex2ox, hex2oy, hex2oz + hex2pos, 
                  hex2xx, hex2xy, hex2xz,     
                  hex2yx, hex2yy, hex2yz,     
                  hex2L,  hex2G);
