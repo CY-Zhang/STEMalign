@@ -3,3 +3,6 @@
 *.txt
 *.npy
 *.png
+*.pyc
+*.gdf
+*.png

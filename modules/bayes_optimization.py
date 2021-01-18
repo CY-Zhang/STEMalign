@@ -296,11 +296,11 @@ class BayesOpt:
         """
         # look from best positions
         (x_best, y_best) = self.best_seen()
-        print(x_best, y_best)
+        # print(x_best, y_best)
         self.x_best = x_best
         x_curr = self.current_x[-1]
         x_start = x_best
-        print(x_start)
+        # print(x_start)
             
         ndim = x_curr.size # dimension of the feature space we're searching NEEDED FOR UCB
         try:
@@ -436,17 +436,19 @@ class BayesOpt:
                     res = basinhopping(aqfcn, x_start,niter=niter,niter_success=niter_success, minimizer_kwargs={'method':optmethod,'args':(self.model, y_best, self.acq_func[1], alpha),'tol':tolerance,'bounds':iter_bounds,'options':{'maxiter':maxiter}})
                     print('single-processing, basinhopping')
                 else:
-                    # res = minimize(aqfcn, x_start - 0.00001, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
-                    iter_bounds = [(-6,6),(-10,10)]  # hard coded boundary for now.
+                    # res = minimize(aqfcn, x_start, args=(self.model, y_best, self.acq_func[1], alpha), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    iter_bounds = [(-10,10),(-10,10)]  # hard coded boundary for now.
                     rs = np.random.RandomState()
-                    x_start = [x+(rs.random()-0.5) for x in x_start]
-                    res = minimize(aqfcn, x_start, args=(self.model, ndim, 1, 2, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    x_start = [x + (rs.random()-0.5) for x in x_start]
+                    res = minimize(aqfcn, x_start, args=fargs, method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
+                    # res = minimize(aqfcn, x_start, args=(self.model, ndim, 1, 2, None), method=optmethod,tol=tolerance,bounds=iter_bounds,options={'maxiter':maxiter})
                     print('single-processing, minimize, x_start = '+ str(x_start))
+                    print(fargs)
                 res = res.x
                 print('Minimizing finished, min point = ' + str(res))
         except:
             raise
-        return np.array(res,ndmin=2) # return resulting x value as a (1 x dim) vector
+        return np.array(res,ndmin=2) # return resulting x value as a (1 x dim) vector with an extra empty dimension.
         
 
 def negProbImprove(x_new, model, y_best, xi):
