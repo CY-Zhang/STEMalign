@@ -5,37 +5,35 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from scipy.ndimage.filters import gaussian_filter
-#                                      the input to sim() is a list of  magnet strengths,
-shadow, x_grid, y_grid, kx_grid, ky_grid = sim(
-	S0    = 0.0,
-    H1    = 0.5, #0.2, #-2.9,
-    H2    = 0.5, #0.2, #-2.9,
-    S3    = 330668.75, # 3.3066875e5
-    S4    = 330598.75, # 3.3066875e5
-    S5    = -330668.75, # -330668.75
-    S6	  = -330668.75, # -330668.75
-	Obj   = 1.3030, #1.30305,
-	alpha = 2.0e-5, #1.1e-5
-	seed  = 0,
-	erL   = 0.0,
-    erTh  = 0.0)
 
-k_abs = np.power(np.power(kx_grid, 2) + np.power(ky_grid, 2), 0.5)
+np.random.seed(seed=0)
 
-fig, (ax0, ax1) = plt.subplots(1,2, figsize=[12,6])
-kmap = ax0.imshow(np.flip(k_abs, axis=0), extent=[x_grid[0,0], x_grid[-1,-1], y_grid[0,0], y_grid[-1,-1]])
-ax0.set_xlabel("x (m)")
-ax0.set_ylabel("y (m)")
-cbar = fig.colorbar(kmap, ax=ax0)
-cbar.set_label(r"$|k_\perp| \quad \mathrm{(m)}^{-1}$")
-ax1.quiver(x_grid, y_grid, kx_grid, ky_grid)
-ax1.set_xlabel("x (m)")
-ax1.set_ylabel("y (m)")
+S1 = 2.5e5
+S2 = 2.5e5
+S3 = 119931.5
+S4 = 648691.415
+H1 = 900.7
+S6 = 390000
+S7 =-654100  #-654100.0
+alpha = 1.0e-4
+Obj=-9.39e5
+L = 1e3
+
+xlim, ylim, shadow = sim(                
+		H1 = H1,
+                H2 = H1,
+                S1 = 2.5e5,
+                S2 = 2.5e5,
+                S3 = 119931.5,
+                S4 = 648691.415,
+                S6 = 390000,
+                S7 =-654100,  #-654100.0, controls the defocus
+                alpha = alpha*5,
+                Obj=-9.390e5,)
+
+plt.imshow(shadow, extent=[-xlim*L, xlim*L, -ylim*L, ylim*L])
+fname="shadow{}.png".format(H1)
+plt.xlabel(r"$x^\prime \ \mathrm{(mrad)}$")
+plt.ylabel(r"$y^\prime \ \mathrm{(mrad)}$")
+plt.savefig(fname)
 plt.show()
-fig.savefig('abr_gradient.png')
-
-fig = plt.figure()
-plt.imshow(shadow)
-plt.show()
-plt.savefig('ronchigram.png')
-

@@ -8,43 +8,54 @@ from scipy.ndimage.filters import gaussian_filter
 
 ### filenames, constants ###
 
-GDFFILE   = "/home/cz489/STEMalign_BO/temp.gdf" 
-ASCIIFILE = "/home/cz489/STEMalign_BO/outscope.txt"
-EXE       = "/nfs/acc/temp/cjd257/gpt310x64/bin/gpt"
-EXETXT    = "/nfs/acc/temp/cjd257/gpt310x64/bin/gdf2a"
+GDFFILE   = "temp.gdf" 
+ASCIIFILE = "outscope.txt"
+EXE       = "/home/chenyu/Software/gpt310x64/bin/gpt"
+EXETXT    = "/home/chenyu/Software/gpt310x64/bin/gdf2a"
+EXETRANS  = "/home/chenyu/Software/gpt310x64/bin/gdftrans"
 MConHBAR  =  2.59e12 #inverse meters
-sampleL = 5e-10;
-errorsigmaL = 1e-5
-errorsigmaTheta = 1e-5
+sampleL = 2.096e-9*4
+sampleScale = 1
+errorsigmaL = 0.0
+errorsigmaTheta = 0.0
 maxsig = 1
+#H1 = 1228.5
+#S6 = 390000
+#S7 =-680186.0
+#Obj=-12180368.5
 
-params = {"sol0nI"  :  -1.3e6,
-          "sol1nI"  :   1.0e6,
+params = {"sol1nI"  :   2.5e5,
           "sol1cH"  :   0.0,
           "sol1cV"  :   0.0,
-          "sol2nI"  :  -2.0e6,
+          "sol2nI"  :   2.5e5,
           "sol2cH"  :   0.0,
           "sol2cV"  :   0.0,
-          "hex1G"   :  25.0,
-          "csol1nI" :   3.3066875e5,
+          "hex1G"   :   899,
+          "soltnI"  :   1.199315e5,
+          "soltcH"  :   0.0,
+          "soltcV"  :   0.0,
+          "csol1nI" :   6.48691415e5,
           "csol1cH" :   0.0,
           "csol1cV" :   0.0,
-          "csol2nI" :   3.3066875e5,
+          "csol2nI" :  -6.48691415e5,
           "csol2cH" :   0.0,
           "csol2cV" :   0.0,
-          "hex2G"   :  -25.0,
-          "csol3nI" :  -3.3066875e5,
+          "hex2G"   :   899,
+          "csol3nI" :   3.9e5,
           "csol3cH" :   0.0,
           "csol3cV" :   0.0,
-          "csol4nI" :  -3.3066875e5,
+          "csol4nI" :  -6.541e5,
           "csol4cH" :   0.0,
           "csol4cV" :   0.0,
-          "sol3nI"  :   1.3031,
+          "sol3nI"  :  -9.39e5,
           "sol3cH"  :   0.0,
           "sol3cV"  :   0.0,
-          "alpha"   :   1e-6}
+          "sol4nI"  :   0.0,
+          "alpha"   :   1e-4,
+          "theta"   :   0.0,
+          "delta"   :   0.0}
 
-eleprefix = ["sol1",  "sol2",  "hex1",
+eleprefix = ["sol1",  "sol2",  "solt","hex1",
              "csol1", "csol2", "hex2",
              "csol3", "csol4", "sol3"]
 
@@ -56,31 +67,36 @@ errornames = [[pre + post for post in elepostfix] for pre in eleprefix]
 
 ### wrapper for gpt ###
 
-def sim(S0    = params["sol0nI"],
-        S1    = params["sol1nI"],
+def sim(S1    = params["sol1nI"],
         S1CH  = params["sol1cH"], 
         S1CV  = params["sol1cV"], 
         S2    = params["sol2nI"],
         S2CH  = params["sol2cH"],
         S2CV  = params["sol2cV"], 
+        S3    = params["soltnI"],
+        S3CH  = params["soltcH"],
+        S3CV  = params["soltcV"], 
         H1    = params["hex1G"],
-        S3    = params["csol1nI"],
-        S3CH  = params["csol1cH"],
-        S3CV  = params["csol1cV"],
-        S4    = params["csol2nI"],
-        S4CH  = params["csol2cH"],
-        S4CV  = params["csol2cV"],
+        S4    = params["csol1nI"],
+        S4CH  = params["csol1cH"],
+        S4CV  = params["csol1cV"],
+        S5    = params["csol2nI"],
+        S5CH  = params["csol2cH"],
+        S5CV  = params["csol2cV"],
         H2    = params["hex2G"],
-        S5    = params["csol3nI"],
-        S5CH  = params["csol3cH"],
-        S5CV  = params["csol3cV"],
-        S6    = params["csol4nI"],
-        S6CH  = params["csol4cH"],
-        S6CV  = params["csol4cV"],
+        S6    = params["csol3nI"],
+        S6CH  = params["csol3cH"],
+        S6CV  = params["csol3cV"],
+        S7    = params["csol4nI"],
+        S7CH  = params["csol4cH"],
+        S7CV  = params["csol4cV"],
         Obj   = params["sol3nI"],
         ObjCH = params["sol3cH"],
         ObjCV = params["sol3cV"],
+        S9    = params["sol4nI"],
         alpha = params["alpha"],
+        theta = params["theta"],
+        delta = params["delta"],
         seed  = 0,
         erL   = errorsigmaL,
         erTh  = errorsigmaTheta):
@@ -93,22 +109,24 @@ def sim(S0    = params["sol0nI"],
                cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
                cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
               -cos(r[3]*erTh)*sin(r[4]*erTh)] for r in rs] 
-    cmdA = "{} -o {} /home/cz489/STEMalign_BO/GPTrelated/hexuscope.in {}{}".format(EXE, GDFFILE, 
+    cmdA = "{} -o {} hexuscope.in {}{}".format(EXE, GDFFILE, 
           "".join(["{}={} ".format(x,y) for x, y in zip(params.keys(), 
-          [S0, S1, S1CH, S2CV, S2, S2CH, S2CV, H1, S3, S3CH, S3CV, S4, S4CH, S4CV, H2, S5, S5CH, S5CV, S6, S6CH, S6CV, Obj, ObjCH, ObjCV, alpha])]), 
+          [S1, S1CH, S2CV, S2, S2CH, S2CV, H1, S3, 
+           S3CH, S3CV, S4, S4CH, S4CV, 
+           S5, S5CH, S5CV, H2, S6, S6CH, S6CV, S7, S7CH, S7CV, Obj, ObjCH, ObjCV, S9, alpha, theta, delta])]), 
           "".join(["{}={} ".format(s, t) for x, y in zip(errornames, errors) for s, t in zip(x, y)]))
     cmdB = "{} -o {} {}".format(EXETXT, ASCIIFILE, GDFFILE)
+    
     if os.path.exists(ASCIIFILE):
       os.remove(ASCIIFILE)
     os.system(cmdA)
     os.system(cmdB)
-    # print(ASCIIFILE)
     screen =  np.loadtxt(ASCIIFILE, skiprows=5)
     
     x  = screen[:,0]
     y  = screen[:,1]
-    kx = MConHBAR*screen[:,4]*screen[:,7]
-    ky = MConHBAR*screen[:,5]*screen[:,7]
+    kx = np.divide(screen[:,4], screen[:,6])
+    ky = np.divide(screen[:,5], screen[:,6])
 
     meankx = np.mean(kx)
     sigkx  = np.std(kx)
@@ -118,6 +136,9 @@ def sim(S0    = params["sol0nI"],
 
     N = 24
 
+    N = 80
+    sigkx = 0.020
+    sigky = 0.020
     x_bins = [[[] for n in range(0,N)] for m in range(0,N)]
     y_bins = [[[] for n in range(0,N)] for m in range(0,N)]
 
@@ -140,17 +161,22 @@ def sim(S0    = params["sol0nI"],
             x_grid[i,j] = np.mean(x_bins[i][j])
             y_grid[i,j] = np.mean(y_bins[i][j])
 
+    # Remove possible nan points that would make following interpolation step fail
+    y_grid[np.isnan(y_grid)]=0
+    x_grid[np.isnan(x_grid)]=0
+
     xfunc = interpolate.SmoothBivariateSpline(kx_grid.flatten(), ky_grid.flatten(), x_grid.flatten())
     yfunc = interpolate.SmoothBivariateSpline(kx_grid.flatten(), ky_grid.flatten(), y_grid.flatten())
 
     ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
     kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
 
-    FILENAME = "/home/cz489/STEMalign_BO/GPTrelated/trnsmssn.pickle"
+    FILENAME = "/home/chenyu/Desktop/GaussianProcess/GPTrelated/trnsmssn.pickle"
 
     with open(FILENAME, "rb") as f:
         trnsmssn = pickle.load(f)
 
-    shadow = np.array([[trnsmssn(xfunc(kx, ky)[0][0]%sampleL, yfunc(kx, ky)[0][0]%sampleL)[0] for kx in kx_fine] for ky in ky_fine])
-    return shadow
+    shadow = np.array([[trnsmssn((xfunc(kx, ky)[0][0]/sampleScale)%sampleL, 
+                                 (yfunc(kx, ky)[0][0]/sampleScale)%sampleL)[0] for kx in kx_fine] for ky in ky_fine])
+    return maxsig*sigkx, maxsig*sigky, shadow
 

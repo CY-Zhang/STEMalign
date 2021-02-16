@@ -1,216 +1,134 @@
 GPTLICENSE=1251405651;
-#########
-
-#setfile("beam", "point.gdf");
+########
+#
+########
 
 N  = 10000;
+N = 100;
 KE = 200000;
 GB  = 0.96745261012;
 
 setparticles("beam", N, me, -qe, -N*qe);
-settransform("wcs", "z", -0.18, "beam");
+settransform("wcs", "z", -0.42, "beam");
 setGBxdist("beam", "u", GB, 0);
 setGBthetadist("beam", "u", alpha/2, alpha);
 setGBphidist("beam", "u", 0, 2*pi);
 
-########
-# Corrector Sol: defaults for 200 keV
-########
-
-csol1pos = 4.75e-2;
-csol1R   = 5.0e-3;
-csol1L   = 5.0e-3;
-#csol1nI  = 3.3066875e5;
-
-csol2pos = 14.25e-2;
-csol2R   = 5.0e-3;
-csol2L   = 5.0e-3;
-#csol2nI  = 3.3066875e5;
-
-csol3pos = 23.75e-2;
-csol3R   = 5.0e-3;
-csol3L   = 5.0e-3;
-#csol3nI  = -3.3066875e5;
-
-csol4pos = 33.25e-2;
-csol4R   = 5.0e-3;
-csol4L   = 5.0e-3;
-#csol4nI  = -3.3066875e5;
-
-###
-# Hex
-###
-
-hex1pos =  0.0;
-hex1L   =  1;
-#hex1G   =  -25.0; #-8; #4.0; #1e5;
-
-hex2pos =  0.19;
-hex2L   =  1;
-#hex2G   =  25.0; #8; #-4.0; #-1e5;
-
-######
-# Condenser Sol
-######
-
-sol1pos = -12.0e-2;
-sol1R   =  5.0e-3;
-sol1L   =  5.0e-3;
-#sol1nI  =  1e6; #7.0e5; #5e5
-
-sol2pos = -3.0e-2;
-sol2R   =  5.0e-3;
-sol2L   =  5.0e-3;
-#sol2nI  =  -2e6; #-7.0e5;
-
-sol3pos = 0.385;
-sol3R = 1.0e-1;
-sol3L = 5.0e-3;
-#sol3nI  = 1.303;
-
-###################
-# Bucking solenoid
-###################
-
-A0 = 3.610885903242491e-10;
-A1 = 3.610885903242491e-10;
-A2 = 2.324520538027110e-11;
-A3 = 7.971303308090873e-05;
-
-sol0pos  = -24.0e-2;
-sol0R    =  5.0e-3;
-sol0L    =  5.0e-3;
-#sol0nI   = -(A1*sol1nI + A2*sol2nI + A3*sol3nI)/A0;
 
 ### steering dipoles ###
 cx = 1.0e-2;
 cz = 5.0e-3;
 
-##################
-# Insert elements
-##################
+###
+# Objective lens
+###
+
+fL  = 0.06 + delta;
+fz0 = 0.12;
+z0 = -0.24;
+
+#sol3pos = 0.9; #0.58;
+#sol3R = 5.0e-3;
+#sol3L = 1.0e-3;
+
+sol1pos = -36.0e-2;
+sol1R   =    1.0e-3;
+sol1L   =    1.0e-2;
+
+sol2pos = -30.0e-2;
+sol2R   =   1.0e-3;
+sol2L   =   1.0e-2;
+
+soltpos = -24.0e-2;
+soltR   =   1.0e-3;
+soltL   =   1.0e-2;
+
+sol3pos =  0.99; #0.52;
+sol3R   =  1.0e-3;
+sol3L   =  1.0e-2;
+
+sol0pos  = -30.0e-2;
+sol0R    =  1.0e-3;
+sol0L    =  1.0e-3;
+
+sol4pos  =120.0e-2;
+sol4R    =  1.0e-3;
+sol4L    =  1.0e-3;
+
+csol1pos =  0.06;
+csol1R   =  1.0e-3;
+csol1L   =  1.0e-3;
+
+csol2pos =  0.18;
+csol2R   =  1.0e-3;
+csol2L   =  1.0e-3;
+
+csol3pos =  0.5; #0.30;
+csol3R   =  1.0e-3;
+csol3L   =  1.0e-3;
+
+csol4pos =  0.72; #0.52;
+csol4R   =  1.0e-3;
+csol4L   =  1.0e-3;
+
+hex1pos =  fz0 - 2*fL;
+hex1L   =  0.06;
+
+hex2pos =  fz0 + 2*fL; 
+hex2L   =  0.06; 
+
+bzsolenoidG("wcs", sol1ox, sol1oy, sol1oz + sol1pos, 
+                    sol1xx, sol1xy, sol1xz,
+                    sol1yx, sol1yy, sol1yz, 
+                    sol1R,  sol1L,  sol1nI);
+bzsolenoidG("wcs", sol2ox, sol2oy, sol2oz + sol2pos, 
+                    sol2xx, sol2xy, sol2xz,
+                    sol2yx, sol2yy, sol2yz, 
+                    sol2R,  sol2L,  sol2nI);
+bzsolenoidG("wcs", soltox, soltoy, soltoz + soltpos, 
+                    soltxx, soltxy, soltxz,
+                    soltyx, soltyy, soltyz, 
+                    soltR,  soltL,  soltnI);
 
 bzsolenoidO3("wcs", csol1ox, csol1oy, csol1oz + csol1pos, 
                     csol1xx, csol1xy, csol1xz,
                     csol1yx, csol1yy, csol1yz, 
                     csol1R,  csol1L,  csol1nI);
+
 bzsolenoidO3("wcs", csol2ox, csol2oy, csol2oz + csol2pos, 
                     csol2xx, csol2xy, csol2xz,
                     csol2yx, csol2yy, csol2yz,  
                     csol2R,  csol2L,  csol2nI);
+
 bzsolenoidO3("wcs", csol3ox, csol3oy, csol3oz + csol3pos, 
                     csol3xx, csol3xy, csol3xz,
                     csol3yx, csol3yy, csol3yz,  
                     csol3R,  csol3L,  csol3nI);
+
 bzsolenoidO3("wcs", csol4ox, csol4oy, csol4oz + csol4pos, 
                     csol4xx, csol4xy, csol4xz,
                     csol4yx, csol4yy, csol4yz,  
                     csol4R,  csol4L,  csol4nI);
 
-sextupole("wcs", hex1ox, hex1oy, hex1oz + hex1pos, 
-                 hex1xx, hex1xy, hex1xz,     
-                 hex1yx, hex1yy, hex1yz,     
-                 hex1L,  hex1G);
-sextupole("wcs", hex2ox, hex2oy, hex2oz + hex2pos, 
-                 hex2xx, hex2xy, hex2xz,     
-                 hex2yx, hex2yy, hex2yz,     
-                 hex2L,  hex2G);
+sextupoleF("wcs", hex1ox, hex1oy, hex1oz + hex1pos, 
+                  hex1xx, hex1xy, hex1xz,     
+                  hex1yx, hex1yy, hex1yz,     
+                  hex1L,  hex1G);
 
-bzsolenoidO3("wcs", "z", sol0pos, sol0R, sol0L, sol0nI);
-bzsolenoidO3("wcs", sol1ox, sol1oy, sol1oz + sol1pos, 
-                    sol1xx, sol1xy, sol1xz,
-                    sol1yx, sol1yy, sol1yz, 
-                    sol1R,  sol1L,  sol1nI);
-bzsolenoidO3("wcs", sol2ox, sol2oy, sol2oz + sol2pos, 
-                    sol2xx, sol2xy, sol2xz,
-                    sol2yx, sol2yy, sol2yz, 
-                    sol2R,  sol2L,  sol2nI);
-glaser("wcs",       sol3ox, sol3oy, sol3oz + sol3pos, 
+sextupoleF("wcs", hex2ox, hex2oy, hex2oz + hex2pos, 
+                  hex2xx, hex2xy, hex2xz,     
+                  hex2yx, hex2yy, hex2yz,     
+                  hex2L,  hex2G);
+
+bzsolenoidO3("wcs", sol3ox, sol3oy, sol3oz + sol3pos, 
                     sol3xx, sol3xy, sol3xz,
                     sol3yx, sol3yy, sol3yz, 
                     sol3R,  sol3L,  sol3nI);
 
-rectmagnet("wcs", csol1ox, csol1oy, csol1oz + csol1pos, 
-                  csol1xx, csol1xy, csol1xz,
-                  csol1yx, csol1yy, csol1yz, 
-                  cx,      cz,      csol1cH, 
-                  0,       0,       0);
-rectmagnet("wcs", csol1ox, csol1oy, csol1oz + csol1pos, 
-                  csol1yx, csol1yy, csol1yz, 
-                  csol1xx, csol1xy, csol1xz,
-                  cx,      cz,      csol1cV, 
-                  0,       0,       0);
-rectmagnet("wcs", csol2ox, csol2oy, csol2oz + csol2pos, 
-                  csol2xx, csol2xy, csol2xz,
-                  csol2yx, csol2yy, csol2yz,  
-                  cx,      cz,      csol2cH, 
-                  0, 0, 0);
-rectmagnet("wcs", csol2ox, csol2oy, csol2oz + csol2pos, 
-                  csol2yx, csol2yy, csol2yz,  
-                  csol2xx, csol2xy, csol2xz,
-                  cx,      cz,      csol2cV, 
-                  0, 0, 0);
-rectmagnet("wcs", csol3ox, csol3oy, csol3oz + csol3pos, 
-                  csol3xx, csol3xy, csol3xz,
-                  csol3yx, csol3yy, csol3yz,  
-                  cx,      cz,      csol3cH, 
-                  0,       0,       0);
-rectmagnet("wcs", csol3ox, csol3oy, csol3oz + csol3pos, 
-                  csol3yx, csol3yy, csol3yz,  
-                  csol3xx, csol3xy, csol3xz,
-                  cx,      cz,      csol3cV, 
-                  0,       0,       0);
-rectmagnet("wcs", csol4ox, csol4oy, csol4oz + csol4pos, 
-                  csol4xx, csol4xy, csol4xz,
-                  csol4yx, csol4yy, csol4yz,  
-                  cx,      cz,      csol4cH, 
-                  0,       0,       0);
-rectmagnet("wcs", csol4ox, csol4oy, csol4oz + csol4pos, 
-                  csol4yx, csol4yy, csol4yz,  
-                  csol4xx, csol4xy, csol4xz,
-                  cx,      cz,      csol4cV, 
-                  0,       0,       0);
-rectmagnet("wcs", sol1ox, sol1oy, sol1oz + sol1pos, 
-                  sol1xx, sol1xy, sol1xz,
-                  sol1yx, sol1yy, sol1yz, 
-                  cx,     cz,     sol1cH,
-                  0,      0,      0);
-rectmagnet("wcs", sol1ox, sol1oy, sol1oz + sol1pos, 
-                  sol1yx, sol1yy, sol1yz, 
-                  sol1xx, sol1xy, sol1xz,
-                  cx,     cz,     sol1cV,
-                  0,      0,      0);
-rectmagnet("wcs", sol2ox, sol2oy, sol2oz + sol2pos, 
-                  sol2xx, sol2xy, sol2xz,
-                  sol2yx, sol2yy, sol2yz, 
-                  cx,     cz,     sol2cH,
-                  0,      0,      0);
-rectmagnet("wcs", sol2ox, sol2oy, sol2oz + sol2pos, 
-                  sol2yx, sol2yy, sol2yz, 
-                  sol2xx, sol2xy, sol2xz,
-                  cx,     cz,     sol2cV,
-                  0,      0,      0);
-rectmagnet("wcs", sol3ox, sol3oy, sol3oz + sol3pos, 
-                  sol3xx, sol3xy, sol3xz,
-                  sol3yx, sol3yy, sol3yz, 
-                  cx,     cz,     sol3cH,
-                  0,      0,      0);
-rectmagnet("wcs", sol3ox, sol3oy, sol3oz + sol3pos, 
-                  sol3yx, sol3yy, sol3yz, 
-                  sol3xx, sol3xy, sol3xz,
-                  cx,     cz,     sol3cV,
-                  0,      0,      0);
 
-########
+#########
 # Output and accuracy
 #########
-accuracy(9.1);
-zmin = -0.18;
-zmax = 0.385;
-tmin = 0.0;
-tmax = 3e-9;
-Nsteps = 1000;
-screen("wcs", "I", 0.385);
-#screen("wcs", "I", zmin, zmax, (zmax-zmin)/Nsteps);
-#tout(tmin,tmax,(tmax-tmin)/Nsteps);
-
+accuracy(11.41);
+screen("wcs", "I", 0.99);
+#snapshot( 0, 8e-9, 1e-12);
