@@ -12,7 +12,7 @@ S1 = 2.5e5
 S2 = 2.5e5
 S3 = 119931.5
 S4 = 648691.415
-H1 = 900.7
+H1 = 710
 S6 = 390000
 S7 =-654100  #-654100.0
 alpha = 1.0e-4
@@ -30,6 +30,19 @@ xlim, ylim, shadow = sim(
                 S7 =-654100,  #-654100.0, controls the defocus
                 alpha = alpha*5,
                 Obj=-9.390e5,)
+
+# Optimal Obj setup when both hexapoles are off
+# xlim, ylim, shadow = sim(                
+#                 H1 = 0,
+#                 H2 = 0,
+#                 S1 = 2.5e5,
+#                 S2 = 2.5e5,
+#                 S3 = 119931.5,
+#                 S4 = 648691.415,
+#                 S6 = 390000,
+#                 S7 =-654100,  #-654100.0, controls the defocus
+#                 alpha = alpha*5,
+#                 Obj=-9.35e5,)
 
 plt.imshow(shadow, extent=[-xlim*L, xlim*L, -ylim*L, ylim*L])
 fname="shadow{}.png".format(H1)
