@@ -21,7 +21,7 @@ sampleL = 2.096e-9*4
 sampleScale = 1
 errorsigmaL = 0.0
 errorsigmaTheta = 0.0
-maxsig = 1
+maxsig = 1.5
 #H1 = 1228.5
 #S6 = 390000
 #S7 =-680186.0
@@ -126,9 +126,9 @@ def sim(S1    = params["sol1nI"],
     cmdD = "{} -o {} {}".format(EXETXT, TRANSASCII, TRANSFILE)
     
     os.system(cmdA)
-    os.system(cmdC)
-    # os.system(cmdB)
-    os.system(cmdD)
+    # os.system(cmdC)
+    os.system(cmdB)
+    # os.system(cmdD)
     screen =  np.loadtxt(ASCIIFILE, skiprows=5)
     
     x  = screen[:,0]
@@ -145,8 +145,8 @@ def sim(S1    = params["sol1nI"],
     N = 24
 
     N = 80
-    sigkx = 0.020
-    sigky = 0.020
+    # sigkx = 0.020
+    # sigky = 0.020
 
     x_bins = [[[] for n in range(0,N)] for m in range(0,N)]
     y_bins = [[[] for n in range(0,N)] for m in range(0,N)]
@@ -174,9 +174,10 @@ def sim(S1    = params["sol1nI"],
     # Remove possible nan points that would make following interpolation step fail
     y_grid[np.isnan(y_grid)]=0
     x_grid[np.isnan(x_grid)]=0
+    index = np.where(x_grid != 0)
 
-    xfunc = interpolate.SmoothBivariateSpline(kx_grid.flatten(), ky_grid.flatten(), x_grid.flatten())
-    yfunc = interpolate.SmoothBivariateSpline(kx_grid.flatten(), ky_grid.flatten(), y_grid.flatten())
+    xfunc = interpolate.SmoothBivariateSpline(kx_grid[index].flatten(), ky_grid[index].flatten(), x_grid[index].flatten(), kx=5, ky=5)
+    yfunc = interpolate.SmoothBivariateSpline(kx_grid[index].flatten(), ky_grid[index].flatten(), y_grid[index].flatten(), kx=5, ky=5)
 
     ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
     kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
