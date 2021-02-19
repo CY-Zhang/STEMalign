@@ -177,7 +177,7 @@ def sim(S1    = params["sol1nI"],
     with open(FILENAME, "rb") as f:
         trnsmssn = pickle.load(f)
 
-    shadow = np.array([[trnsmssn((xfunc(kx, ky)[0][0]/sampleScale)%sampleL, 
-                                 (yfunc(kx, ky)[0][0]/sampleScale)%sampleL)[0] for kx in kx_fine] for ky in ky_fine])
+    shadow = np.array([[trnsmssn((xfunc(kx, ky)[0][0]/sampleScale + sampleL/2)%sampleL, 
+                                 (yfunc(kx, ky)[0][0]/sampleScale + sampleL/2)%sampleL)[0] for kx in kx_fine] for ky in ky_fine])
     return maxsig*sigkx, maxsig*sigky, shadow
 
