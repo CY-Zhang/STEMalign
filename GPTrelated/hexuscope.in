@@ -3,17 +3,17 @@ GPTLICENSE=1251405651;
 #
 ########
 
-N  = 10000;
-N = 100;
+N  = 100000;
+#N = 100;
 KE = 200000;
 GB  = 0.96745261012;
+# GB = 1.233;
 
 setparticles("beam", N, me, -qe, -N*qe);
 settransform("wcs", "z", -0.42, "beam");
 setGBxdist("beam", "u", GB, 0);
 setGBthetadist("beam", "u", alpha/2, alpha);
 setGBphidist("beam", "u", 0, 2*pi);
-
 
 ### steering dipoles ###
 cx = 1.0e-2;
@@ -43,7 +43,7 @@ soltpos = -24.0e-2;
 soltR   =   1.0e-3;
 soltL   =   1.0e-2;
 
-sol3pos =  0.99; #0.52;
+sol3pos =  0.99 + 0.00361; #0.52;
 sol3R   =  1.0e-3;
 sol3L   =  1.0e-2;
 
@@ -130,5 +130,7 @@ bzsolenoidO3("wcs", sol3ox, sol3oy, sol3oz + sol3pos,
 # Output and accuracy
 #########
 accuracy(11.41);
-screen("wcs", "I", 0.99);
-#snapshot( 0, 8e-9, 1e-12);
+screen("wcs", "I", 0.99);  # default screen at the center of obj
+#screen("wcs", "I", 0.986); # screen after the obj lens
+#snapshot( 0, 8e-9, 1e-12);  # multiple snapshot for trajectory
+#snapshot(0);                # initial distribution snapshot

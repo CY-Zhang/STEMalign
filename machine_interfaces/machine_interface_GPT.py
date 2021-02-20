@@ -31,14 +31,21 @@ class machine_interface:
         xlim, ylim, shadow = sim(
                 H1    = self.x[0][0],
                 H2    = self.x[0][0] + self.x[0][1],
-                S1 = self.x[0][2],  #2.5e5,
-                S2 = self.x[0][3],  #2.5e5,
-                S3 = self.x[0][4],  #119931.5,
-                S4 = self.x[0][5],  #648691.415,
-                S6 = self.x[0][6],  #390000,
-                S7 = self.x[0][7],  #-654100.0
+                S1 = 2.5e5,
+                S2 = 2.5e5,
+                S3 = 119931.5,
+                S4 = 648691.415,
+                # S6 = 390000,
+                # S7 = -654100.0,
+                # S1 = self.x[0][2],  #2.5e5,
+                # S2 = self.x[0][3],  #2.5e5,
+                # S3 = self.x[0][4],  #119931.5,
+                # S4 = self.x[0][5],  #648691.415,
+                S6 = self.x[0][2],  #390000,
+                S7 = self.x[0][3],  #-654100.0
                 alpha = 1.0e-4*5,
-                Obj=-9.39e5,
+                Obj=-3.7503e6, # new objective lens setting with high conv angle
+                # Obj=-9.39e5,
              )      # the parameters that are not given an value here would be set to the default values, which could be found in uscope.py
                     # the sim function would return the Ronchigram, and save the outscope.txt file to the path that was calling this function
                     # i.e. the path of the Jupyte Notebook
@@ -48,7 +55,7 @@ class machine_interface:
             time.sleep(1)
         # time.sleep(10)
         # number of pixels that will be used to generate x-y and kx-ky grid
-        N = 24
+        N = 40
 
         # process the simulated results from outscope.txt, then remove the file
         screen =  np.loadtxt(ASCIIFILE, skiprows=5)
@@ -58,11 +65,15 @@ class machine_interface:
         x = x * 1e12
         y = y * 1e12  # x and y in unit of pm
 
-        kx = MConHBAR*screen[:,4]*screen[:,7]
-        ky = MConHBAR*screen[:,5]*screen[:,7]
-        kz = MConHBAR*screen[:,6]*screen[:,7]
-        ax = np.arctan(kx/kz) # x_angle in unit of radian
-        ay = np.arctan(ky/kz) # y_angle in unit of radian
+        ax = np.divide(screen[:,4], screen[:,6])
+        ay = np.divide(screen[:,5], screen[:,6])
+        arx = np.sqrt(ax**2 + ay**2)
+        index = np.where(arx < 0.04)
+
+        x = x[index]
+        y = y[index]
+        ax = ax[index]
+        ay = ay[index]
 
         # directly calculate emittance from defination for all the simulated electrons
         emit_1 = np.average(x**2 + y**2)

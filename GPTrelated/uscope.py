@@ -142,12 +142,10 @@ def sim(S1    = params["sol1nI"],
 
     meanky = np.mean(ky)
     sigky  = np.std(ky)
-
-    N = 24
-
-    N = 80
-    # sigkx = 0.020
-    # sigky = 0.020
+    
+    N = 40
+    sigkx = 0.030 / maxsig
+    sigky = 0.030 / maxsig
 
     x_bins = [[[] for n in range(0,N)] for m in range(0,N)]
     y_bins = [[[] for n in range(0,N)] for m in range(0,N)]
