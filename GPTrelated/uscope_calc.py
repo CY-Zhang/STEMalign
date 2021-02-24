@@ -134,8 +134,6 @@ def sim(S1    = params["sol1nI"],
     meanky = np.mean(ky)
     sigky  = np.std(ky)
 
-    N = 24
-
     N = 40
     sigkx = .040/maxsig
     sigky = .040/maxsig
@@ -169,8 +167,8 @@ def sim(S1    = params["sol1nI"],
     xfunc = interpolate.SmoothBivariateSpline(kx_grid[index].flatten(), ky_grid[index].flatten(), x_grid[index].flatten(), kx=5, ky=5)
     yfunc = interpolate.SmoothBivariateSpline(kx_grid[index].flatten(), ky_grid[index].flatten(), y_grid[index].flatten(), kx=5, ky=5)
 
-    ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
-    kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
+    ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 128)
+    kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 128)
 
     FILENAME = "/home/chenyu/Desktop/GaussianProcess/GPTrelated/trnsmssn_new.pickle"
 
