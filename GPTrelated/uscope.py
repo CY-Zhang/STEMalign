@@ -16,12 +16,13 @@ EXE       = "/home/chenyu/Software/gpt310x64/bin/gpt"
 EXETXT    = "/home/chenyu/Software/gpt310x64/bin/gdf2a"
 EXETRANS  = "/home/chenyu/Software/gpt310x64/bin/gdftrans"
 MConHBAR  =  2.59e12 #inverse meters
-sampleL = 5e-10
+# sampleL = 5e-10
 sampleL = 2.096e-9*4
+sampleL = 9e-9
 sampleScale = 1
 errorsigmaL = 0.0
 errorsigmaTheta = 0.0
-maxsig = 1.5
+maxsig = 1.0
 #H1 = 1228.5
 #S6 = 390000
 #S7 =-680186.0
@@ -143,9 +144,10 @@ def sim(S1    = params["sol1nI"],
     meanky = np.mean(ky)
     sigky  = np.std(ky)
     
-    N = 40
-    sigkx = 0.030 / maxsig
-    sigky = 0.030 / maxsig
+    N = 100
+    # set a fixed kx, ky limit if necessary
+    sigkx = 0.040 / maxsig
+    sigky = 0.040 / maxsig
 
     x_bins = [[[] for n in range(0,N)] for m in range(0,N)]
     y_bins = [[[] for n in range(0,N)] for m in range(0,N)]
@@ -181,7 +183,7 @@ def sim(S1    = params["sol1nI"],
     ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
     kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
 
-    FILENAME = "trnsmssn_new.pickle"
+    FILENAME = "trnsmssn_realpotential.pickle"
 
     with open(FILENAME, "rb") as f:
         trnsmssn = pickle.load(f)
