@@ -11,6 +11,11 @@ function [psi_p, probe] = calculate_probe(chi0,imdim, simdim, aperture_size, shi
         obj_ap = imtranslate(obj_ap,shifts);
     end
     expchi0 = exp(-1i * chi0).*obj_ap;          % Apply Objectived Ap
+    % bandpass filter expchi0 will cause uneven background in the final
+    % Ronchigram, and won't remove the stripes artifact
+    
+%     window = fspecial('gaussian',[1024,1024],100);
+%     expchi0 = expchi0 .* window;
 %     psi_p = fft2(expchi0);                     % Probe Wavefunction
     psi_p = ifft2(expchi0);                     % cz, should be inverse transform from k space wavefunction to r space?
     % see Kirkland 2020 eq (5.48) for the usage of ifft2
