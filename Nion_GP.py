@@ -42,7 +42,7 @@ print(start_point)
 
 #creat machine interface
 mi_module = importlib.import_module('machine_interfaces.machine_interface_Nion')
-mi = mi_module.machine_interface(dev_ids = dev_ids, start_point = start_point, CNNoption = 0, CNNpath = '/home/chenyu/Desktop/GaussianProcess/CNNmodels/VGG16_test13_attempt06.h5') 
+mi = mi_module.machine_interface(dev_ids = dev_ids, start_point = start_point, CNNoption = 1, CNNpath = '/home/chenyu/Desktop/GaussianProcess/CNNmodels/VGG16_test13_attempt06.h5') 
 
 # Check the readout from machine interface
 print(mi.x)

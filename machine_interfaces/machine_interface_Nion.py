@@ -1,10 +1,8 @@
 import numpy as np
 import sys
 sys.path.insert(1, '/home/chenyu/Desktop/GaussianProcess/GPTrelated/')
-from uscope_calc import sim
-import matplotlib.pyplot as plt
 import os
-import time
+import threading
 # CNN related libraries
 from keras import applications
 from keras.models import Sequential
@@ -29,8 +27,7 @@ class machine_interface:
         frame_parameters = self.ronchigram.get_current_frame_parameters()
         frame_parameters["binning"] = 16
         frame_parameters["exposure_ms"] = 10
-        self.ronchigram.start_playing(frame_parameters)
-        self.ronchigram.stop_playing()
+
 
         os.environ["CUDA_VISIBLE_DEVICES"]="0" # specify which GPU to use
         self.pvs = np.array(dev_ids)
@@ -38,7 +35,9 @@ class machine_interface:
         self.CNNoption = CNNoption
 
         if CNNoption == 1:
-            self.CNNmodel = self.loadCNN(CNNpath); # hard coded model path for now
+            # load CNN architecture in a separate thread
+            threading.Thread(target = self.loadCNN(CNNpath))
+            # self.CNNmodel = self.loadCNN(CNNpath); # hard coded model path for now
             gpus = tf.config.experimental.list_physical_devices('GPU')
             if gpus:
               try:
@@ -69,7 +68,9 @@ class machine_interface:
 
         new_model.add(top_model)
         new_model.load_weights(path)
-        return new_model
+        self.CNNmodel = new_model
+        print('CNN model loaded with weights.')
+        return
 
     def scale_range(self, input, min, max):
         input += -(np.min(input))
@@ -81,48 +82,54 @@ class machine_interface:
         x = np.linspace(-simdim, simdim, px_size)
         y = np.linspace(-simdim, simdim, px_size)
         xv, yv = np.meshgrid(x, y)
-        apt_mask = mask = np.sqrt(xv*xv + yv*yv) < ap_size # aperture mask
+        apt_mask = np.sqrt(xv*xv + yv*yv) < ap_size # aperture mask
         return apt_mask
 
     def setX(self, x_new):
         self.x = x_new
         idx = 0
-        # print(x_new)
-        # print(self.abr_list)
         # for nionswift-usim, change the aberration corrector status when calling setX
         for abr_coeff in self.abr_list:
             self.stem_controller.SetVal(abr_coeff, x_new[0][idx])
             idx += 1
         # add expressions to set machine ctrl pvs to the position called self.x -- Note: self.x is a 2-dimensional array of shape (1, ndim). To get the values as a 1d-array, use self.x[0]
         return
+    
+    def acquire_frame(self):
+        self.ronchigram.start_playing()
+        print('Acquiring frame')
+        self.frame.append(np.asarray(self.ronchigram.grab_next_to_start()[0]))
+        print('Frame acquired.')
+        self.ronchigram.stop_playing()
+        return
+
+    def getCNNprdiction(self, frame_array):
+        x_list = []
+        frame_array = self.scale_range(frame_array, 0, 1)
+        new_channel = np.zeros(frame_array.shape)
+        img_stack = np.dstack((frame_array, new_channel, new_channel))
+        x_list.append(img_stack)
+        x_list = np.concatenate([arr[np.newaxis] for arr in x_list])
+        prediction = self.CNNmodel.predict(x_list, batch_size = 1)
+        self.objective_state = 1 - prediction[0][0]
+        return
 
     def getState(self): 
         # os.environ["CUDA_VISIBLE_DEVICES"]="0"
-        self.ronchigram.start_playing()
-        print("before grabbing frame.")
-        frame = np.asarray(self.ronchigram.grab_next_to_start()[0])
-        self.ronchigram.stop_playing()
+        self.frame = []
+        print("start separate thread to grab a frame.")
+        threading.Thread(target = self.acquire_frame())
+        frame_array = np.asarray(self.frame)[0]
+        print('Acquisition finished.')
 
-        # Get emittance from CNN model using the shadow returned by GPT
+        # Get emittance from CNN model using the image acquired from Ronchigram camera
         if self.CNNoption == 1:
-            x_list = []
-            # normalize then divided by 2 to match the contrast of Matlab simulated Ronchigrams
-            # frame = self.scale_range(shadow, 0, 1) / 2 * self.aperture_generator(128, 40, 40)
-            frame = self.scale_range(frame, 0, 1)
-            new_channel = np.zeros(frame.shape)
-            img_stack = np.dstack((frame, new_channel, new_channel))
-            x_list.append(img_stack)
-            x_list = np.concatenate([arr[np.newaxis] for arr in x_list])
-            prediction = self.CNNmodel.predict(x_list, batch_size = 1)
-            # print(prediction)
-            objective_state = 1 - prediction[0][0]
             print('Using CNN prediction.')
-            del x_list, img_stack, frame, prediction
+            threading.Thread(target = self.getCNNprdiction(frame_array))
 
-        # # Just for debug purpose, cannot run without CNN in this case.
+        # Just for debug purpose, cannot run without CNN in this case.
         if self.CNNoption == 0:
             print('Running without CNN.')
             objective_state = 1
-        # # print(objective_state)
 
         return np.array(self.x, ndmin = 2), np.array([[objective_state]])
