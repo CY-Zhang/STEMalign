@@ -6,3 +6,6 @@
 *.pyc
 *.gdf
 *.png
+*.gdf
+*.txt
+*checkpoint*
