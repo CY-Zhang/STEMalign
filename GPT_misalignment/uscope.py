@@ -8,18 +8,22 @@ from scipy.ndimage.filters import gaussian_filter
 
 ### filenames, constants ###
 
-GDFFILE   = "temp.gdf" 
-ASCIIFILE = "outscope.txt"
-TRANSFILE = "trans.gdf"
-TRANSASCII = "trans.txt"
-EXE       = "/home/chenyu/Software/gpt310x64_20210921/bin/gpt"
-EXETXT    = "/home/chenyu/Software/gpt310x64_20210921/bin/gdf2a"
-EXETRANS  = "/home/chenyu/Software/gpt310x64_20210921/bin/gdftrans"
+PATH = "/home/chenyu/Desktop/git/STEMalign/GPT_misalignment/"
+GDFFILE   = "{}temp.gdf" .format(PATH)
+ASCIIFILE = "{}outscope.txt".format(PATH)
+TRANSFILE = "{}trans.gdf".format(PATH)
+TRANSASCII = "{}trans.txt".format(PATH)
+ROOT      = "/home/chenyu/Software/gpt310x64_20210921/bin/"
+EXE       = "{}gpt".format(ROOT)
+EXETXT    = "{}gdf2a".format(ROOT)
+EXETRANS  = "{}gdftrans".format(ROOT)
 MConHBAR  =  2.59e12 #inverse meters
 # sampleL = 5e-10
 sampleL = 2.096e-9*4
+sampleL = 9e-9
+sampleL = 32 * 0.396e-9
 sampleScale = 1
-errorsigmaL = 0.0
+errorsigmaL = 5.0e-7
 errorsigmaTheta = 0.0
 maxsig = 1.0
 #H1 = 1228.5
@@ -34,6 +38,8 @@ params = {"sol1nI"  :   2.5e5,
           "sol2cH"  :   0.0,
           "sol2cV"  :   0.0,
           "hex1G"   :   899,
+          "hex1cH"  :   0.0,
+          "hex1cV"  :   0.0,
           "soltnI"  :   1.199315e5,
           "soltcH"  :   0.0,
           "soltcV"  :   0.0,
@@ -44,6 +50,8 @@ params = {"sol1nI"  :   2.5e5,
           "csol2cH" :   0.0,
           "csol2cV" :   0.0,
           "hex2G"   :   899,
+          "hex2cH"  :   0.0,
+          "hex2cV"  :   0.0,
           "csol3nI" :   3.9e5,
           "csol3cH" :   0.0,
           "csol3cV" :   0.0,
@@ -61,6 +69,10 @@ params = {"sol1nI"  :   2.5e5,
 eleprefix = ["sol1",  "sol2",  "solt","hex1",
              "csol1", "csol2", "hex2",
              "csol3", "csol4", "sol3"]
+
+selected = [False, False, False, True, 
+            False, False, True, 
+            False, False, False]
 
 elepostfix = ["ox", "oy", "oz",
               "xx", "xy", "xz",
@@ -80,6 +92,8 @@ def sim(S1    = params["sol1nI"],
         S3CH  = params["soltcH"],
         S3CV  = params["soltcV"], 
         H1    = params["hex1G"],
+        H1CH  = params["hex1cH"],
+        H1CV  = params["hex1cV"],
         S4    = params["csol1nI"],
         S4CH  = params["csol1cH"],
         S4CV  = params["csol1cV"],
@@ -87,6 +101,8 @@ def sim(S1    = params["sol1nI"],
         S5CH  = params["csol2cH"],
         S5CV  = params["csol2cV"],
         H2    = params["hex2G"],
+        H2CH  = params["hex2cH"],
+        H2CV  = params["hex2cV"],
         S6    = params["csol3nI"],
         S6CH  = params["csol3cH"],
         S6CV  = params["csol3cV"],
@@ -105,20 +121,34 @@ def sim(S1    = params["sol1nI"],
         erTh  = errorsigmaTheta):
     np.random.seed(seed = seed)
     rs     = [np.random.normal(size = 6) for dummy in range(0, len(eleprefix))]
-    errors = [[r[0]*erL, r[1]*erL, r[2]*erL,
-               cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
-              -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
-               sin(r[3]*erTh)*sin(r[4]*erTh),
-               cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
-               cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
-              -cos(r[3]*erTh)*sin(r[4]*erTh)] for r in rs] 
-    cmdA = "{} -o {} hexuscope.in {}{}".format(EXE, GDFFILE, 
-          "".join(["{}={} ".format(x,y) for x, y in zip(params.keys(), 
-          [S1, S1CH, S2CV, S2, S2CH, S2CV, H1, S3, 
-           S3CH, S3CV, S4, S4CH, S4CV, 
-           S5, S5CH, S5CV, H2, S6, S6CH, S6CV, S7, S7CH, S7CV, Obj, ObjCH, ObjCV, S9, alpha, theta, delta])]), 
-          "".join(["{}={} ".format(s, t) for x, y in zip(errornames, errors) for s, t in zip(x, y)]))
+    errors = []
+    for i in range(len(rs)):
+        if selected[i]:
+            r = rs[i]
+            errors.append([r[0]*erL, r[1]*erL, r[2]*erL,
+                cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
+                -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
+                sin(r[3]*erTh)*sin(r[4]*erTh),
+                cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
+                cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
+                -cos(r[3]*erTh)*sin(r[4]*erTh)])
+        else:
+            errors.append([0,0,0,1,0,0,0,1,0])
+    
+    # errors = [[r[0]*erL, r[1]*erL, r[2]*erL,
+    #            cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
+    #           -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
+    #            sin(r[3]*erTh)*sin(r[4]*erTh),
+    #            cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
+    #            cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
+    #           -cos(r[3]*erTh)*sin(r[4]*erTh)] for r in rs] 
 
+    cmdA = "{} -o {} {}hexuscope.in {}{}".format(EXE, GDFFILE, PATH,
+          "".join(["{}={} ".format(x,y) for x, y in zip(params.keys(), 
+          [S1, S1CH, S1CV, S2, S2CH, S2CV, H1, H1CH, H1CV, S3, 
+           S3CH, S3CV, S4, S4CH, S4CV, 
+           S5, S5CH, S5CV, H2, H2CH, H2CV, S6, S6CH, S6CV, S7, S7CH, S7CV, Obj, ObjCH, ObjCV, S9, alpha, theta, delta])]), 
+          "".join(["{}={} ".format(s, t) for x, y in zip(errornames, errors) for s, t in zip(x, y)]))
     cmdC = "{} -o {} {} time x y z G".format(EXETRANS, TRANSFILE, GDFFILE)
 
     cmdB = "{} -o {} {}".format(EXETXT, ASCIIFILE, GDFFILE)
@@ -143,7 +173,7 @@ def sim(S1    = params["sol1nI"],
     meanky = np.mean(ky)
     sigky  = np.std(ky)
     
-    N = 100
+    N = 40
     # set a fixed kx, ky limit if necessary
     sigkx = 0.040 / maxsig
     sigky = 0.040 / maxsig
@@ -179,8 +209,8 @@ def sim(S1    = params["sol1nI"],
     xfunc = interpolate.SmoothBivariateSpline(kx_grid[index].flatten(), ky_grid[index].flatten(), x_grid[index].flatten(), kx=5, ky=5)
     yfunc = interpolate.SmoothBivariateSpline(kx_grid[index].flatten(), ky_grid[index].flatten(), y_grid[index].flatten(), kx=5, ky=5)
 
-    ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
-    kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 201)
+    ky_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 128)
+    kx_fine = np.linspace(-sigkx*maxsig, sigkx*maxsig, 128)
 
     FILENAME = "/home/chenyu/Desktop/git/STEMalign/GPTrelated/trnsmssn_antialiasing.pickle"
 
