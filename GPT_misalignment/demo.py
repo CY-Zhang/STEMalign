@@ -49,7 +49,9 @@ xlim, ylim, shadow = sim(
                  S6 = 390000,
                  S7 =-654100,  #-654100.0, controls the defocus
                  alpha = alpha*5,
-                 Obj=-3.7503e6-220,)
+                 Obj=-3.7503e6-220,
+                 erL = 0,
+                 erTh = 0,)
 
 plt.imshow((shadow - np.amin(shadow))/(np.amax(shadow) - np.amin(shadow)), extent=[-xlim*L, xlim*L, -ylim*L, ylim*L], cmap='gray')
 fname="shadow{}.png".format(H1)

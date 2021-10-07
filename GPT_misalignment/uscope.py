@@ -23,7 +23,7 @@ sampleL = 2.096e-9*4
 sampleL = 9e-9
 sampleL = 32 * 0.396e-9
 sampleScale = 1
-errorsigmaL = 5.0e-7
+errorsigmaL = 0
 errorsigmaTheta = 0.0
 maxsig = 1.0
 #H1 = 1228.5
@@ -70,8 +70,8 @@ eleprefix = ["sol1",  "sol2",  "solt","hex1",
              "csol1", "csol2", "hex2",
              "csol3", "csol4", "sol3"]
 
-selected = [False, False, False, True, 
-            False, False, True, 
+selected = [False, False, False, False, 
+            False, False, False, 
             False, False, False]
 
 elepostfix = ["ox", "oy", "oz",
@@ -123,18 +123,16 @@ def sim(S1    = params["sol1nI"],
     rs     = [np.random.normal(size = 6) for dummy in range(0, len(eleprefix))]
     errors = []
     for i in range(len(rs)):
-        if selected[i]:
-            r = rs[i]
-            errors.append([r[0]*erL, r[1]*erL, r[2]*erL,
-                cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
-                -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
-                sin(r[3]*erTh)*sin(r[4]*erTh),
-                cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
-                cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
-                -cos(r[3]*erTh)*sin(r[4]*erTh)])
-        else:
-            errors.append([0,0,0,1,0,0,0,1,0])
-    
+        r = rs[i]
+        # errors.append([1e-5,1e-5,0,1,0,0,0,1,0]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
+        errors.append([r[0]*erL, r[1]*erL, r[2]*erL,
+            cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
+            -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
+            sin(r[3]*erTh)*sin(r[4]*erTh),
+            cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
+            cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
+            -cos(r[3]*erTh)*sin(r[4]*erTh)]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
+
     # errors = [[r[0]*erL, r[1]*erL, r[2]*erL,
     #            cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
     #           -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
@@ -157,9 +155,9 @@ def sim(S1    = params["sol1nI"],
     
     # cmdA,C,D to track the particles, cmdA,B to run standard screen
     os.system(cmdA)
-    # os.system(cmdC)
-    os.system(cmdB)
-    # os.system(cmdD)
+    os.system(cmdC)
+    # os.system(cmdB)
+    os.system(cmdD)
     screen =  np.loadtxt(ASCIIFILE, skiprows=5)
     
     x  = screen[:,0]
