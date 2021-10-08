@@ -66,11 +66,11 @@ params = {"sol1nI"  :   2.5e5,
           "theta"   :   0.0,
           "delta"   :   0.0}
 
-eleprefix = ["sol1",  "sol2",  "solt","hex1",
+eleprefix = ["sol1",  "sol2",  "solt", "hex1",
              "csol1", "csol2", "hex2",
              "csol3", "csol4", "sol3"]
 
-selected = [False, False, False, False, 
+selected = [True, False, False, False, 
             False, False, False, 
             False, False, False]
 
@@ -123,15 +123,21 @@ def sim(S1    = params["sol1nI"],
     rs     = [np.random.normal(size = 6) for dummy in range(0, len(eleprefix))]
     errors = []
     for i in range(len(rs)):
-        r = rs[i]
-        # errors.append([1e-5,1e-5,0,1,0,0,0,1,0]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
-        errors.append([r[0]*erL, r[1]*erL, r[2]*erL,
-            cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
-            -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
-            sin(r[3]*erTh)*sin(r[4]*erTh),
-            cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
-            cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
-            -cos(r[3]*erTh)*sin(r[4]*erTh)]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
+        # for debug purpose, introduce fixed misalignment
+        errors.append([1e-5,1e-5,0,1,0,0,0,1,0]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
+        # implementation of error with no misalignment along the z-axis
+        # in this implementation, each row of error is: [r[0]*erL, r[1]*erL, 0, cos(r[5]*erTh), -sin(r[5]*erTh), 0, sin(r[5]*erTh), cos(r[5]*erTh, 0)]
+        # r = rs[i]
+        # r[2], r[3], r[4] = 0, 0, 0
+        # errors.append([r[0] * erL, r[1] * erL, r[2] * erL,
+        #     cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
+        #     -cos(r[3]*erTh)*sin(r[5]*erTh) - cos(r[4]*erTh)*cos(r[5]*erTh)*sin(r[3]*erTh),
+        #     sin(r[3]*erTh)*sin(r[4]*erTh),
+        #     cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
+        #     cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
+        #     -cos(r[3]*erTh)*sin(r[4]*erTh)]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
+
+    # Cameron's original implementation with random misalignment along all three dimensions.
 
     # errors = [[r[0]*erL, r[1]*erL, r[2]*erL,
     #            cos(r[3]*erTh)*cos(r[5]*erTh) - cos(r[4]*erTh)*sin(r[3]*erTh)*sin(r[5]*erTh),
@@ -140,6 +146,7 @@ def sim(S1    = params["sol1nI"],
     #            cos(r[5]*erTh)*sin(r[3]*erTh) + cos(r[3]*erTh)*cos(r[4]*erTh)*sin(r[5]*erTh),
     #            cos(r[3]*erTh)*cos(r[4]*erTh)*cos(r[5]*erTh) - sin(r[3]*erTh)*sin(r[5]*erTh),
     #           -cos(r[3]*erTh)*sin(r[4]*erTh)] for r in rs] 
+    print(errors)
 
     cmdA = "{} -o {} {}hexuscope.in {}{}".format(EXE, GDFFILE, PATH,
           "".join(["{}={} ".format(x,y) for x, y in zip(params.keys(), 
@@ -155,9 +162,9 @@ def sim(S1    = params["sol1nI"],
     
     # cmdA,C,D to track the particles, cmdA,B to run standard screen
     os.system(cmdA)
-    os.system(cmdC)
-    # os.system(cmdB)
-    os.system(cmdD)
+    # os.system(cmdC)
+    os.system(cmdB)
+    # os.system(cmdD)
     screen =  np.loadtxt(ASCIIFILE, skiprows=5)
     
     x  = screen[:,0]

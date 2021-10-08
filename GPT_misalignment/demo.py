@@ -20,14 +20,14 @@ Obj=-9.39e5
 L = 1e3
 
 xlim, ylim, shadow = sim(                
-                 S1CV  = 0.0,
-                 S1CH  = 0.0,
+                 S1CV  = -2.4e-6,
+                 S1CH  = 1.8e-7,
                  S2CV  = 0.0,
                  S2CH  = 0.0,
                  S3CV  = 0.0,
                  S3CH  = 0.0,
-                 H1CV  = 0.0,
-                 H1CH  = 0.0,
+                 H1CV  = 0.0e-8,
+                 H1CH  = 0.0e-8,
                  S4CV  = 0.0,
                  S4CH  = 0.0,
                  S5CV  = 0.0,
@@ -51,7 +51,7 @@ xlim, ylim, shadow = sim(
                  alpha = alpha*5,
                  Obj=-3.7503e6-220,
                  erL = 0,
-                 erTh = 0,)
+                 erTh = 0.1,)
 
 plt.imshow((shadow - np.amin(shadow))/(np.amax(shadow) - np.amin(shadow)), extent=[-xlim*L, xlim*L, -ylim*L, ylim*L], cmap='gray')
 fname="shadow{}.png".format(H1)
