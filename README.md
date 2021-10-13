@@ -12,3 +12,4 @@ torch 1.7.1 (CPU only)
 gpytorch 1.4.2
 
 09/21/21 Started new one based on boTorch, the old one using SLAC-GP can be found on https://github.com/CY-Zhang/Bayesian-optimization-using-Gaussian-Process.git
+10/12/21 BO optimization on GPT simulation with misalignment, and BO optimization on Nion instruments are added. Nion part not tested on real instruments yet.

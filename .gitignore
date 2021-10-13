@@ -9,3 +9,6 @@
 *.gdf
 *.txt
 *checkpoint*
+*.pdf
+*.pt
+*.pkl

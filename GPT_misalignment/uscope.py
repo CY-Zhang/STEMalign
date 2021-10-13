@@ -70,7 +70,7 @@ eleprefix = ["sol1",  "sol2",  "solt", "hex1",
              "csol1", "csol2", "hex2",
              "csol3", "csol4", "sol3"]
 
-selected = [True, False, False, False, 
+selected = [False, False, False, True, 
             False, False, False, 
             False, False, False]
 
@@ -124,7 +124,7 @@ def sim(S1    = params["sol1nI"],
     errors = []
     for i in range(len(rs)):
         # for debug purpose, introduce fixed misalignment
-        errors.append([1e-5,1e-5,0,1,0,0,0,1,0]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
+        errors.append([1e-6,1e-6,0,1,0,0,0,1,0]) if selected[i] else errors.append([0,0,0,1,0,0,0,1,0])
         # implementation of error with no misalignment along the z-axis
         # in this implementation, each row of error is: [r[0]*erL, r[1]*erL, 0, cos(r[5]*erTh), -sin(r[5]*erTh), 0, sin(r[5]*erTh), cos(r[5]*erTh, 0)]
         # r = rs[i]

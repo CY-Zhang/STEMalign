@@ -20,8 +20,8 @@ Obj=-9.39e5
 L = 1e3
 
 xlim, ylim, shadow = sim(                
-                 S1CV  = -2.4e-6,
-                 S1CH  = 1.8e-7,
+                 S1CV  = 0e-6,
+                 S1CH  = 0e-7,
                  S2CV  = 0.0,
                  S2CH  = 0.0,
                  S3CV  = 0.0,
