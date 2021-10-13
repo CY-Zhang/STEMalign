@@ -1,11 +1,11 @@
 import torch.nn as nn
-import torchvision
 from torch.nn import Module
 import torch.nn.functional as F
 
 # Customized CNN model
+# TODO: check out why the __init__ method is called when import class Net, figure out a possible way to move everything to GPU.
 class Net(Module):   
-    def __init__(self, pretrained = False, dropout = 0.3, linear_shape = 512, device = device):
+    def __init__(self, device, dropout = 0.3, linear_shape = 512):
         super(Net, self).__init__()
         self.device = device
         print(self.device)
@@ -25,51 +25,21 @@ class Net(Module):
         self.conv13 = nn.Conv2d(512, 512, kernel_size = (3, 3), stride = (1, 1), padding = (1, 1))
         self.fc1 = nn.Linear(4 * 4 * 512, linear_shape)
         self.dropout = nn.Dropout(p = dropout)
-
-        self.fc2 = nn.Linear(linear_shape, 1)
+        # need to define as fc3 to match the training results
+        self.fc3 = nn.Linear(linear_shape, 1)
     
     def lock_base(self):
         for parameter in self.parameters():
             parameter.requires_grad = False
         self.fc1.weight.requires_grad = True
         self.fc1.bias.requires_grad = True
-        self.fc2.weight.requires_grad = True
-        self.fc2.bias.requires_grad = True
+        self.fc3.weight.requires_grad = True
+        self.fc3.bias.requires_grad = True
     
     def unlock_base(self):
         for parameter in self.parameters():
             parameter.requires_grad = True
             
-    def load_pretrained(self, weights):
-        print("Loading weights and bias from VGG16.")
-        vgg16 = torchvision.models.vgg16(pretrained = True)
-        self.conv1.weight.data = vgg16.features[0].weight.data.to(device = self.device)
-        self.conv1.bias.data = vgg16.features[0].bias.data.to(device = self.device)
-        self.conv2.weight.data = vgg16.features[2].weight.data.to(device = self.device)
-        self.conv2.bias.data = vgg16.features[2].bias.data.to(device = self.device)
-        self.conv3.weight.data = vgg16.features[5].weight.data.to(device = self.device)
-        self.conv3.bias.data = vgg16.features[5].bias.data.to(device = self.device)
-        self.conv4.weight.data = vgg16.features[7].weight.data.to(device = self.device)
-        self.conv4.bias.data = vgg16.features[7].bias.data.to(device = self.device)
-        self.conv5.weight.data = vgg16.features[10].weight.data.to(device = self.device)
-        self.conv5.bias.data = vgg16.features[10].bias.data.to(device = self.device)
-        self.conv6.weight.data = vgg16.features[12].weight.data.to(device = self.device)
-        self.conv6.bias.data = vgg16.features[12].bias.data.to(device = self.device)
-        self.conv7.weight.data = vgg16.features[14].weight.data.to(device = self.device)
-        self.conv7.bias.data = vgg16.features[14].bias.data.to(device = self.device)
-        self.conv8.weight.data = vgg16.features[17].weight.data.to(device = self.device)
-        self.conv8.bias.data = vgg16.features[17].bias.data.to(device = self.device)
-        self.conv9.weight.data = vgg16.features[19].weight.data.to(device = self.device)
-        self.conv9.bias.data = vgg16.features[19].bias.data.to(device = self.device)
-        self.conv10.weight.data = vgg16.features[21].weight.data.to(device = self.device)
-        self.conv10.bias.data = vgg16.features[21].bias.data.to(device = self.device)
-        self.conv11.weight.data = vgg16.features[24].weight.data.to(device = self.device)
-        self.conv11.bias.data = vgg16.features[24].bias.data.to(device = self.device)
-        self.conv12.weight.data = vgg16.features[26].weight.data.to(device = self.device)
-        self.conv12.bias.data = vgg16.features[26].bias.data.to(device = self.device)
-        self.conv13.weight.data = vgg16.features[28].weight.data.to(device = self.device)
-        self.conv13.bias.data = vgg16.features[28].bias.data.to(device = self.device)
-    
     # Defining the forward pass    
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -94,5 +64,5 @@ class Net(Module):
         x = self.dropout(x)
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
-        x = self.fc2(x)
+        x = self.fc3(x)
         return x

@@ -16,6 +16,7 @@ class Nion_interface():
     # option to read existing default value, can be used when running experiment
     self.readDefault = readDefault
     self.aperture = 0
+    self.remove_buffer = remove_buffer
 
     # Initialize stem controller
     self.stem_controller = Registry.get_component("stem_controller")
