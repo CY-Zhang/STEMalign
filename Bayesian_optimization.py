@@ -117,7 +117,7 @@ class BOinterface():
         return
 
     '''
-    Function to run one iteration on the Bayesian optimization
+    Function to run one iteration on the Bayesian optimization and update both gp and mll.
     '''
     def run_iteration(self):
         fit_gpytorch_model(self.mll)
@@ -150,7 +150,7 @@ class BOinterface():
         self.mll = ExactMarginalLogLikelihood(self.gp.likelihood, self.gp)
 
     '''
-    Function to run the full Bayesian optimization for niter times.
+    Function to run the full Bayesian optimization for niter iterations.
     Input:
     niter: int, number of iterations to run
     '''

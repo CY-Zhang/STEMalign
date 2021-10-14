@@ -4,7 +4,6 @@ import numpy as np
 import threading
 
 class Nion_interface():
-# Parameters setup
   def __init__(self, act_list = [], readDefault = False, detectCenter = False, exposure_t = 100, remove_buffer = True):
 
     # initialize aberration list, this has to come before setting aberrations
@@ -64,7 +63,9 @@ class Nion_interface():
     apt_mask = mask = np.sqrt(xv*xv + yv*yv) < ap_size # aperture mask
     return apt_mask
 
-  # function that set the values of activated aberration coefficients.
+  '''
+  function that set the values of activated aberration coefficients.
+  '''
   def setX(self, x_new):
       self.x = x_new
       idx = 0
@@ -81,7 +82,10 @@ class Nion_interface():
           idx += 1
       return
 
-  # function to acquire a single frame by calling grab_next_to_start
+  '''
+  function to acquire a single frame by calling grab_next_to_start
+  '''
+
   def acquire_frame(self):
       self.frame = np.zeros([self.size, self.size])
       # self.ronchigram.start_playing()
@@ -100,7 +104,9 @@ class Nion_interface():
       # print('Frame acquired.')
       return
 
-  # function to stop acquisition on the Ronchigram camera
+  '''
+  function to stop acquisition on the Ronchigram camera
+  '''
   def stopAcquisition(self):
       if self.ronchigram:
           self.ronchigram.stop_playing()
