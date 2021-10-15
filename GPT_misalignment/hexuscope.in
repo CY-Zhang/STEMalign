@@ -14,6 +14,8 @@ settransform("wcs", "z", -0.42, "beam");
 setGBxdist("beam", "u", GB, 0);
 setGBthetadist("beam", "u", alpha/2, alpha);
 setGBphidist("beam", "u", 0, 2*pi);
+rmax("wcs", "z", 0.0, 1.0e-3);
+GBzmin("wcs", "z", 0.0, 0.0, 0.9);
 
 ### steering dipoles ###
 cx = 1.0e-2;
@@ -179,7 +181,7 @@ gaussiankick("wcs", sol3ox, sol3oy, sol3oz + sol3pos,
 # Output and accuracy
 #########
 accuracy(11.41);
-screen("wcs", "I", 0.99001);  # default screen at the center of obj
+screen("wcs", "I", 0.99);  # default screen at the center of obj
 #screen("wcs", "I", 0.986); # screen after the obj lens
 #snapshot( 0, 8e-9, 1e-12);  # multiple snapshot for trajectory
 #snapshot(0);                # initial distribution snapshotcreen("wcs", "I", 0.99);
