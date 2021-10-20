@@ -71,7 +71,7 @@ class BOinterface():
         acquire_thread.start()
         frame_array = self.Nion.frame
 
-        frame_array = self.Nion.scale_range(frame_array, 0, 1)
+        frame_array = self.Nion.scale_range_aperture(frame_array, 0, 1)
         if self.aperture != 0:
             frame_array = frame_array * self.Nion.aperture_generator(128, 50, self.aperture)
         new_channel = np.zeros(frame_array.shape)
