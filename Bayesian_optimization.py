@@ -2,6 +2,7 @@ import sys
 import numpy as np
 import threading
 import matplotlib.pyplot as plt
+from os.path import exists
 
 sys.path.insert(1, '/home/chenyu/Desktop/git/STEMalign/')
 from Nion_interface import Nion_interface
@@ -23,7 +24,7 @@ class BOinterface():
     '''
     Main function that set up the input parameters and run the Bayesian optimization.
     '''
-    def __init__(self, abr_activate, option_standardize, aperture, CNNpath):
+    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename):
 
         # setup basic parameters
         self.ndim = sum(abr_activate)            # number of variable parameters
@@ -49,6 +50,10 @@ class BOinterface():
         self.best_observed_value = []
         self.best_seen_ronchigram = np.zeros([128, 128])
         self.best_par = np.zeros(self.ndim)
+        self.ronchigram_list = []
+
+        # readin the name for saving the results
+        self.filename = filename
 
     '''
     Function to load CNN model from path.
@@ -99,6 +104,7 @@ class BOinterface():
             pred = self.getCNNprediction()
             if pred[1] > best_y:
                 self.best_seen_ronchigram = pred[0]
+                best_y = pred[1]
             output_y.append(pred[1])
         self.train_Y = torch.tensor(output_y).unsqueeze(-1)
 
@@ -113,7 +119,7 @@ class BOinterface():
         self.mll = ExactMarginalLogLikelihood(self.gp.likelihood, self.gp)
         self.bounds = torch.stack([torch.zeros(self.ndim, device = self.device), torch.ones(self.ndim, device = self.device)])
         self.best_observed_value.append(best_y)
-
+        self.ronchigram_list.append(self.best_seen_ronchigram)
         return
 
     '''
@@ -141,6 +147,7 @@ class BOinterface():
             self.best_observed_value.append(result[1])
         else:
             self.best_observed_value.append(self.best_observed_value[-1])
+        self.ronchigram_list.append(result[0])
 
         # update GP model using dataset with new datapoint
         if self.option_standardize:
@@ -165,7 +172,18 @@ class BOinterface():
     Function ot save the process and results of Bayesian optimization.
     TODO: Try to find a way to save the whole GP model.
     '''
-    def saveresults(self, best_observed_value):
+    def saveresults(self):
+        train_X = self.train_X.cpu().detach().numpy()
+        train_Y = self.train_Y.cpu().detach().numpy()
+        index = 0
+        temp = self.filename + 'X_' + str(index) + '.npy'
+        if exists(temp):
+            index += 1
+            temp = self.filename + 'X_' + str(index) + '.npy'
+
+        np.save(self.filename + str(index) + 'X_' + '.npy', train_X)
+        np.save(self.filename + str(index) + 'Y_' + '.npy', train_Y)
+        np.save(self.filename + str(index) + 'Ronchigram_' + '.npy', np.array(self.ronchigram_list))
         return
 
 
