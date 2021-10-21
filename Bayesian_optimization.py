@@ -165,7 +165,7 @@ class BOinterface():
     def run_optimization(self, niter):
         for i in range(niter):
             self.run_iteration()
-            print(f"Iteraton number {i}, current best seen value {self.best_observed_value[-1]}")
+            print(f"Iteraton number {i}, current value {self.train_Y[-1].cpu().detach().numpy()}, current best seen value {self.best_observed_value[-1]}")
         return
 
     '''
@@ -177,13 +177,13 @@ class BOinterface():
         train_Y = self.train_Y.cpu().detach().numpy()
         index = 0
         temp = self.filename + 'X_' + str(index) + '.npy'
-        if exists(temp):
+        while exists(temp):
             index += 1
             temp = self.filename + 'X_' + str(index) + '.npy'
 
-        np.save(self.filename + str(index) + 'X_' + '.npy', train_X)
-        np.save(self.filename + str(index) + 'Y_' + '.npy', train_Y)
-        np.save(self.filename + str(index) + 'Ronchigram_' + '.npy', np.array(self.ronchigram_list))
+        np.save(self.filename + str(index) + '_X.npy', train_X)
+        np.save(self.filename + str(index) + '_Y.npy', train_Y)
+        np.save(self.filename + str(index) + '_Ronchigram.npy', np.array(self.ronchigram_list))
         return
 
 
