@@ -33,6 +33,7 @@ class BOinterface():
         self.dtype = torch.double
         self.option_standardize = option_standardize
         self.CNNoption = 1
+        self.abr_activate = self.abr_activate
         # self.device = ("cuda" if torch.cuda.is_available() else "cpu")
         # self.device = torch.device('cuda:1')   # possible command to select from multiple GPUs
         self.device = "cpu"                 # hard coded to cpu for now, need to find a way to move all the model weights to the desired device
@@ -68,7 +69,6 @@ class BOinterface():
     '''
     Function to set objective based on CNN prediction.
     Input: 128x128 numpy array as the input to CNN.
-    TODO: add scale_range, scale_range_aperture, and aperture_generator function here.
     TODO: change the limit in the aperture generator from 50 to a variable
     '''
     def getCNNprediction(self):
@@ -195,8 +195,23 @@ class BOinterface():
     best_seen_ronchigran: 2D numpy array saving the ronchigram that correspond to the optimized parameter.
 
     '''
-    def plotresults(self, best_observed_value, best_seen_ronchigram):
-        plt.plot(best_observed_value)
-        plt.imshow(best_seen_ronchigram)
+    def plotresults(self):
+        niter = len(self.train_Y)
+        ninit = len(self.train_Y) - len(self.best_observed_value)
+        fig, ax = plt.subplot(3,1,figsize = [6,18])
+        ax[0].plot(np.linspace(ninit + 1, niter, len(self.best_observed_value)), self.best_observed_value, label = 'Best seen value')
+        ax[0].plot(np.linspace(1, niter, niter), self.train_Y, label = 'Observations')
+        ax[0].set_xlabel('Iterations',fontsize = 16)
+        ax[0].set_ylabel('CNN prediction', fontsize = 16)
+        ax[0].tick_params(axis='both', labelsize=16)
+        ax[0].axvline(x = ninit + 1, ls = '--', color = 'black')
+        ax[0].legend(fontsize = 16)
+
+        index = [i for i, x in enumerate(self.abr_activate) if x]
+        for i in range(self.train_X.shape[1]):
+            ax[1].plot((self.train_X[:,i] - 0.5) * self.Nion.abr_lim[index[i]], linewidth = 2, label = self.Nion.abr_list[index[i]])
+
+        ax[2].imshow(self.best_seen_ronchigram, cmap = 'gray')
+        ax[2].axis('off')
         plt.show()
         return
