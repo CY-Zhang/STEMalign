@@ -2,9 +2,15 @@ import torch.nn as nn
 from torch.nn import Module
 import torch.nn.functional as F
 
-# Customized CNN model
+# Customized CNN model, only used for prediction, no function to lock/unlock the convolution base.
 # TODO: check out why the __init__ method is called when import class Net, figure out a possible way to move everything to GPU.
-class Net(Module):   
+class Net(Module):
+    '''
+    Input:
+    device: the target device for the pytorch model.
+    dropout: dropout rate for the model, this only changes the training stage.
+    linear_shape: size of the linear layer before the final output.
+    '''
     def __init__(self, device, dropout = 0.3, linear_shape = 512):
         super(Net, self).__init__()
         self.device = device
@@ -27,21 +33,9 @@ class Net(Module):
         self.dropout = nn.Dropout(p = dropout)
         # need to define as fc3 to match the training results
         self.fc3 = nn.Linear(linear_shape, 1)
-    
-    def lock_base(self):
-        for parameter in self.parameters():
-            parameter.requires_grad = False
-        self.fc1.weight.requires_grad = True
-        self.fc1.bias.requires_grad = True
-        self.fc3.weight.requires_grad = True
-        self.fc3.bias.requires_grad = True
-    
-    def unlock_base(self):
-        for parameter in self.parameters():
-            parameter.requires_grad = True
             
     # Defining the forward pass    
-    def forward(self, x):
+    def forward(self, x) -> float:
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = F.max_pool2d(x, 2)

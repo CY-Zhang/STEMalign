@@ -28,6 +28,7 @@ class BOinterface():
 
         # setup basic parameters
         self.ndim = sum(abr_activate)            # number of variable parameters
+        self.abr_activate = abr_activate
         self.aperture = aperture            # option to include cutoff aperture, in mrad
         self.niter = 50                     # number of iterations after initialization
         self.dtype = torch.double
@@ -186,7 +187,6 @@ class BOinterface():
         np.save(self.filename + str(index) + '_Ronchigram.npy', np.array(self.ronchigram_list))
         return
 
-
     '''
     Function to plot the Bayesian optimization results.
     TODO: Possibly add the model's prediction of a single dimension.
@@ -198,7 +198,7 @@ class BOinterface():
     def plotresults(self):
         niter = len(self.train_Y)
         ninit = len(self.train_Y) - len(self.best_observed_value)
-        fig, ax = plt.subplot(3,1,figsize = [6,18])
+        fig, ax = plt.subplots(3,1,figsize = [7,18])
         ax[0].plot(np.linspace(ninit + 1, niter, len(self.best_observed_value)), self.best_observed_value, label = 'Best seen value')
         ax[0].plot(np.linspace(1, niter, niter), self.train_Y, label = 'Observations')
         ax[0].set_xlabel('Iterations',fontsize = 16)
