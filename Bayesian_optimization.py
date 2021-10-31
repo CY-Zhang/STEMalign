@@ -24,7 +24,7 @@ class BOinterface():
     '''
     Main function that set up the input parameters and run the Bayesian optimization.
     '''
-    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename):
+    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename, exposure_t):
 
         # setup basic parameters
         self.ndim = sum(abr_activate)            # number of variable parameters
@@ -41,7 +41,8 @@ class BOinterface():
         CNNpath = CNNpath 
 
         # initialize the interface that talks to Nion swift.
-        self.Nion = Nion_interface(act_list = abr_activate, readDefault = True, detectCenter = True, exposure_t = 500, remove_buffer = False)
+        # TODO: change exposure time to a variable when initialize
+        self.Nion = Nion_interface(act_list = abr_activate, readDefault = True, detectCenter = True, exposure_t = exposure_t, remove_buffer = False)
         self.default = self.Nion.default
         
         # initialize the CNN model used to run predictions.
@@ -125,6 +126,7 @@ class BOinterface():
 
     '''
     Function to run one iteration on the Bayesian optimization and update both gp and mll.
+    TODO: refine the print(new_x) part, remove the tensor layer, convert it to physical units.
     '''
     def run_iteration(self):
         fit_gpytorch_model(self.mll)
@@ -133,7 +135,7 @@ class BOinterface():
             UCB, bounds=self.bounds, q = 1, num_restarts=5, raw_samples=20,
         )
         new_x = candidate.detach()
-        print(new_x)
+        print(new_x.cpu().detach().numpy())
         
         self.Nion.setX(np.array(new_x[0]))
         result = self.getCNNprediction()
@@ -213,5 +215,6 @@ class BOinterface():
 
         ax[2].imshow(self.best_seen_ronchigram, cmap = 'gray')
         ax[2].axis('off')
+        ax[2].legend(fontsize = 16)
         plt.show()
         return
