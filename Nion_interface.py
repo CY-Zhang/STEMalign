@@ -5,7 +5,7 @@ import threading
 
 class Nion_interface():
     '''
-    # TODO: set the aberration limits to changeable values.
+    TODO: set the aberration limits to changeable values.
     Input:
     act_list: a boolean list that determines which aberration coefficent is variable. The length should be the same as self.abr_lsit.
     readDefault: boolean that determines whether read the initial aberration values. Not in use.
@@ -13,7 +13,7 @@ class Nion_interface():
     exposure_t: acquisition exposure time in ms.
     remove_buffer: boolean that determines whether to acquire two frames and discard the first one.
     '''
-    def __init__(self, act_list = [], readDefault = False, detectCenter = False, exposure_t = 100, remove_buffer = True):
+    def __init__(self, act_list = [], readDefault = False, detectCenter = False, exposure_t = 100, remove_buffer = 1):
 
         # initialize aberration list, this has to come before setting aberrations, hard coded aberration limit for now.
         self.abr_list = ["C10", "C12.x", "C12.y", "C21.x", "C21.y", "C23.x", "C23.y", "C30","C32.x", "C32.y", "C34.x", "C34.y"]
@@ -128,7 +128,8 @@ class Nion_interface():
         # if remove_buffer option is on, grab a frame without saving it.
         if self.remove_buffer:
             print("remove buffer")
-            self.ronchigram.grab_next_to_start()
+            for _ in range(self.remove_buffer):
+                self.ronchigram.grab_next_to_start()
         temp = np.asarray(self.ronchigram.grab_next_to_start()[0])
         temp = temp[self.center_y - 640 : self.center_y + 640, self.center_x - 640: self.center_x + 640]
         new_shape = [self.size, self.size]

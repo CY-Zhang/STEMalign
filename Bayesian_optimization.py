@@ -3,6 +3,7 @@ import numpy as np
 import threading
 import matplotlib.pyplot as plt
 from os.path import exists
+import os
 
 sys.path.insert(1, '/home/chenyu/Desktop/git/STEMalign/')
 from Nion_interface import Nion_interface
@@ -61,6 +62,7 @@ class BOinterface():
     '''
     Function to load CNN model from path.
     Input: path to the torch model.
+    TODO: modeify linear_shape to automatically detected linear layer shape.
     '''
     def loadCNNmodel(self, path):
         model = Net(device = self.device, linear_shape = 256).to(self.device)
@@ -69,7 +71,7 @@ class BOinterface():
         return model
 
     '''
-    Function to set objective based on CNN prediction.
+    Function to set objective based on CNN prediction. Return the raw frame without any rescale.
     Input: 128x128 numpy array as the input to CNN.
     TODO: change the limit in the aperture generator from 50 to a variable
     '''
@@ -77,7 +79,7 @@ class BOinterface():
         acquire_thread = threading.Thread(target = self.Nion.acquire_frame())
         acquire_thread.start()
         frame_array = self.Nion.frame
-
+        frame_array_raw = self.Nion.frame
         frame_array = self.Nion.scale_range_aperture(frame_array, 0, 1)
         if self.aperture != 0:
             frame_array = frame_array * self.Nion.aperture_generator(128, 50, self.aperture)
@@ -86,7 +88,7 @@ class BOinterface():
         x = torch.tensor(np.transpose(img_stack)).to(self.device)
         x = x.unsqueeze(0).float()
         prediction = self.model(x)
-        return frame_array, 1 - prediction[0][0].cpu().detach().numpy()
+        return frame_array_raw, 1 - prediction[0][0].cpu().detach().numpy()
 
     '''
     # Function that initialize the GP and MLL model, with n random starting points.
@@ -126,11 +128,12 @@ class BOinterface():
 
     '''
     Function to run one iteration on the Bayesian optimization and update both gp and mll.
-    TODO: refine the print(new_x) part, remove the tensor layer, convert it to physical units.
+    TODO: refine the print(new_x) part, convert it to physical units.
     '''
     def run_iteration(self):
         fit_gpytorch_model(self.mll)
-        UCB = UpperConfidenceBound(self.gp, beta = 2)    
+        UCB = UpperConfidenceBound(self.gp, beta = 2)  
+        # TODO: Check the option here in the optimize_acqf  
         candidate, acq_value = optimize_acqf(
             UCB, bounds=self.bounds, q = 1, num_restarts=5, raw_samples=20,
         )
@@ -173,20 +176,22 @@ class BOinterface():
 
     '''
     Function ot save the process and results of Bayesian optimization.
-    TODO: Try to find a way to save the whole GP model.
+    TODO: Save all the metadata being used in the BO. Acquistion function parameters,
     '''
     def saveresults(self):
         train_X = self.train_X.cpu().detach().numpy()
         train_Y = self.train_Y.cpu().detach().numpy()
+        if not exists(self.filename):
+            os.mkdir(self.filename)
         index = 0
-        temp = self.filename + 'X_' + str(index) + '.npy'
+        temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
         while exists(temp):
             index += 1
-            temp = self.filename + 'X_' + str(index) + '.npy'
+            temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
 
-        np.save(self.filename + str(index) + '_X.npy', train_X)
-        np.save(self.filename + str(index) + '_Y.npy', train_Y)
-        np.save(self.filename + str(index) + '_Ronchigram.npy', np.array(self.ronchigram_list))
+        np.save(self.filename + '/X_' + "{:02d}".format(index) + '.npy', train_X)
+        np.save(self.filename + '/Y_' + "{:02d}".format(index) + '.npy', train_Y)
+        np.save(self.filename + '/Ronchigram_' + "{:02d}".format(index) + '.npy', np.array(self.ronchigram_list))
         return
 
     '''
