@@ -78,8 +78,8 @@ class Nion_interface():
         img += min
         return img
 
-    def scale_range_aperture(self, img, min, max):
-        mask = self.aperture_generator(128, 50, 40)
+    def scale_range_aperture(self, img, min, max, simdim, ap_size):
+        mask = self.aperture_generator(128, simdim, ap_size)
         array = np.ndarray.flatten(img[np.where(mask==1)])
         img = img - np.amin(array)
         img = img / (np.amax(array) - np.amin(array))

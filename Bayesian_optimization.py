@@ -25,25 +25,25 @@ class BOinterface():
     '''
     Main function that set up the input parameters and run the Bayesian optimization.
     '''
-    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename, exposure_t):
+    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename, exposure_t, remove_buffer, apt_option):
 
         # setup basic parameters
         self.ndim = sum(abr_activate)            # number of variable parameters
         self.abr_activate = abr_activate
         self.aperture = aperture            # option to include cutoff aperture, in mrad
-        self.niter = 50                     # number of iterations after initialization
+        self.n_measurement = 0              # counter for number of measurements
         self.dtype = torch.double
         self.option_standardize = option_standardize
         self.CNNoption = 1
         self.abr_activate = self.abr_activate
+        self.apt_option = apt_option        # option to determine whether normalize with aperture considered, 0 for not considering aperture
         # self.device = ("cuda" if torch.cuda.is_available() else "cpu")
         # self.device = torch.device('cuda:1')   # possible command to select from multiple GPUs
         self.device = "cpu"                 # hard coded to cpu for now, need to find a way to move all the model weights to the desired device
         CNNpath = CNNpath 
 
         # initialize the interface that talks to Nion swift.
-        # TODO: change exposure time to a variable when initialize
-        self.Nion = Nion_interface(act_list = abr_activate, readDefault = True, detectCenter = True, exposure_t = exposure_t, remove_buffer = False)
+        self.Nion = Nion_interface(act_list = abr_activate, readDefault = True, detectCenter = True, exposure_t = exposure_t, remove_buffer = remove_buffer)
         self.default = self.Nion.default
         
         # initialize the CNN model used to run predictions.
@@ -80,7 +80,10 @@ class BOinterface():
         acquire_thread.start()
         frame_array = self.Nion.frame
         frame_array_raw = self.Nion.frame
-        frame_array = self.Nion.scale_range_aperture(frame_array, 0, 1)
+        if self.apt_option:
+            frame_array = self.Nion.scale_range_aperture(frame_array, 0, 1, 50, self.apt_option)
+        else:
+            frame_array = self.Nion.scale_range(frame_array, 0, 1)
         if self.aperture != 0:
             frame_array = frame_array * self.Nion.aperture_generator(128, 50, self.aperture)
         new_channel = np.zeros(frame_array.shape)
@@ -124,6 +127,7 @@ class BOinterface():
         self.bounds = torch.stack([torch.zeros(self.ndim, device = self.device), torch.ones(self.ndim, device = self.device)])
         self.best_observed_value.append(best_y)
         self.ronchigram_list.append(self.best_seen_ronchigram)
+        self.n_measurement += n
         return
 
     '''
@@ -172,6 +176,7 @@ class BOinterface():
         for i in range(niter):
             self.run_iteration()
             print(f"Iteraton number {i}, current value {self.train_Y[-1].cpu().detach().numpy()}, current best seen value {self.best_observed_value[-1]}")
+        self.n_measurement += niter
         return
 
     '''
