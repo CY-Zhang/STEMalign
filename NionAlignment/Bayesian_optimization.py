@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from os.path import exists
 import os
 
-sys.path.insert(1, '/home/chenyu/Desktop/git/STEMalign/')
+sys.path.insert(1, 'C:/Users/ASUsers/Downloads/TorchBO/')
 from Nion_interface import Nion_interface
 from TorchCNN import Net
 
