@@ -184,6 +184,7 @@ class BOinterface():
             os.mkdir(self.filename)
         index = 0
         temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
+        # TODO: add a function to make metadata dictionary, call it right after initialization to save everything.
         metadata = {}
         metadata['abr_activate'] = self.abr_activate
         metadata['option_standardize'] = self.option_standardize
@@ -191,6 +192,8 @@ class BOinterface():
         metadata['CNNpath'] = self.CNNpath
         metadata['acq_func'] = self.acq_func_par
         metadata['scale_option'] = self.scale_option
+        metadata['total_measurements'] = self.n_measurement
+        metadata['abr_limit'] = self.Nion.abr_lim
         while exists(temp):
             index += 1
             temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'

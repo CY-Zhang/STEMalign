@@ -16,7 +16,7 @@ class Nion_interface():
         '''
 
         # initialize aberration list, this has to come before setting aberrations, hard coded aberration limit for now.
-        self.abr_list = ["C10", "C12.x", "C12.y", "C21.x", "C21.y", "C23.x", "C23.y", "C30","C32.x", "C32.y", "C34.x", "C34.y"]
+        self.abr_list = ["C10", "C12.x", "C12.y", "C21.x", "C21.y", "C23.x", "C23.y", "C30", "C32.x", "C32.y", "C34.x", "C34.y"]
         self.default = [2e-9, 2e-9, 2e-9, 20e-9, 20e-9, 20e-9, 20e-9, 0.5e-6, 0.5e-6, 0.5e-6, 0.5e-6, 0.5e-6]
         self.abr_lim = [2e-6, 1.5e-7, 1.5e-7, 3e-6, 3e-6, 1e-5, 1e-5, 3e-4, 2e-4, 2e-4, 1.5e-4, 1.5e-4] # TODO: set the aberration limits to changeable values.
         self.activate = act_list
@@ -67,6 +67,7 @@ class Nion_interface():
         img: a 2D numpy array saving the image to normalize.
         min: target min value after normalization
         max: target max value after normalization
+        
         Output:
         img: normalized 2D numpy array.
         '''
@@ -98,7 +99,7 @@ class Nion_interface():
         x = np.linspace(-simdim, simdim, px_size)
         y = np.linspace(-simdim, simdim, px_size)
         xv, yv = np.meshgrid(x, y)
-        apt_mask = mask = np.sqrt(xv*xv + yv*yv) < ap_size # aperture mask
+        apt_mask = np.sqrt(xv*xv + yv*yv) < ap_size # aperture mask
         return apt_mask
 
     def setX(self, x_new):
@@ -149,4 +150,16 @@ class Nion_interface():
         '''
         if self.ronchigram:
             self.ronchigram.stop_playing()
+        return
+
+    def reset_default(self, abr_coeff):
+        '''
+        function to reset selected aberration coefficients to default value when initializing the Nion interface.
+        Input:
+        abr_coeff: string of the selected aberration coefficient to reset, must be one of the coefficients in in abr_list or 'all' for reset all the coefficients.
+        '''
+        
+        for i in range(len(self.abr_list)):
+            if (abr_coeff == 'all' or abr_coeff == self.abr_list[i]):
+                self.stem_controller.SetVal(self.abr_list[i], self.default[i])
         return
