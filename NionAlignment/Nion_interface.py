@@ -4,21 +4,21 @@ import numpy as np
 import threading
 
 class Nion_interface():
-    '''
-    TODO: set the aberration limits to changeable values.
-    Input:
-    act_list: a boolean list that determines which aberration coefficent is variable. The length should be the same as self.abr_lsit.
-    readDefault: boolean that determines whether read the initial aberration values. Not in use.
-    detectorCenter: boolean that determines whether to automatically detect the center of the Rochigram. Would use the center of the whole frame if set to False.
-    exposure_t: acquisition exposure time in ms.
-    remove_buffer: boolean that determines whether to acquire two frames and discard the first one.
-    '''
+
     def __init__(self, act_list = [], readDefault = False, detectCenter = False, exposure_t = 100, remove_buffer = 1):
+        '''
+        Input:
+        act_list: a boolean list that determines which aberration coefficent is variable. The length should be the same as self.abr_lsit.
+        readDefault: boolean that determines whether read the initial aberration values. Not in use.
+        detectorCenter: boolean that determines whether to automatically detect the center of the Rochigram. Would use the center of the whole frame if set to False.
+        exposure_t: acquisition exposure time in ms.
+        remove_buffer: boolean that determines whether to acquire two frames and discard the first one.
+        '''
 
         # initialize aberration list, this has to come before setting aberrations, hard coded aberration limit for now.
         self.abr_list = ["C10", "C12.x", "C12.y", "C21.x", "C21.y", "C23.x", "C23.y", "C30","C32.x", "C32.y", "C34.x", "C34.y"]
         self.default = [2e-9, 2e-9, 2e-9, 20e-9, 20e-9, 20e-9, 20e-9, 0.5e-6, 0.5e-6, 0.5e-6, 0.5e-6, 0.5e-6]
-        self.abr_lim = [2e-6, 1.5e-7, 1.5e-7, 3e-6, 3e-6, 1e-5, 1e-5, 3e-4, 2e-4, 2e-4, 1.5e-4, 1.5e-4]
+        self.abr_lim = [2e-6, 1.5e-7, 1.5e-7, 3e-6, 3e-6, 1e-5, 1e-5, 3e-4, 2e-4, 2e-4, 1.5e-4, 1.5e-4] # TODO: set the aberration limits to changeable values.
         self.activate = act_list
 
         # option to read existing default value, can be used when running experiment
@@ -59,26 +59,32 @@ class Nion_interface():
         self.size = 128
         self.frame = np.zeros([self.size, self.size])
 
-    '''
-    Method to scale a single frame to the range of [min, max].
-    Input:
-    img: a 2D numpy array saving the image to normalize.
-    min: target min value after normalization
-    max: target max value after normalization
-    Output:
-    img: normalized 2D numpy array.
-
-    Option1: scale_range: directly normalize the image based on the max and min value on the image. This could lead to reduced
-    contrast as the area outside aperture is much darker than inside the aperture.
-    Option2: scale_range_aperture: this option normalize the image bsed on the max and min value within certain annular range.
-    '''
     def scale_range(self, img, min, max):
+        '''
+        Method to scale a single frame to the range of [min, max], directly normalize the image based on the max and min value on the image. This could lead to reduced
+        contrast as the area outside aperture is much darker than inside the aperture.
+        Input:
+        img: a 2D numpy array saving the image to normalize.
+        min: target min value after normalization
+        max: target max value after normalization
+        Output:
+        img: normalized 2D numpy array.
+        '''
         img += -(np.min(img))
         img /= np.max(img) / (max - min)
         img += min
         return img
 
     def scale_range_aperture(self, img, min, max, simdim, ap_size):
+        '''
+        Method to scale a single frame to the range of [min, max], normalize the image bsed on the max and min value within certain annular range.
+        Input:
+        img: a 2D numpy array saving the image to normalize.
+        min: target min value after normalization
+        max: target max value after normalization
+        Output:
+        img: normalized 2D numpy array.
+        '''
         mask = self.aperture_generator(128, simdim, ap_size)
         array = np.ndarray.flatten(img[np.where(mask==1)])
         img = img - np.amin(array)
@@ -95,12 +101,12 @@ class Nion_interface():
         apt_mask = mask = np.sqrt(xv*xv + yv*yv) < ap_size # aperture mask
         return apt_mask
 
-    '''
-    function that set the values of activated aberration coefficients.
-    Input:
-    x_new: the list with new aberration values to set.
-    '''
     def setX(self, x_new):
+        '''
+        function that set the values of activated aberration coefficients.
+        Input:
+        x_new: the list with new aberration values to set.
+        '''
         self.x = x_new
         idx = 0
         idx_activate = 0
@@ -116,11 +122,10 @@ class Nion_interface():
             idx += 1
         return
 
-    '''
-    function to acquire a single frame by calling grab_next_to_start.
-    '''
-
     def acquire_frame(self):
+        '''
+        function to acquire a single frame by calling grab_next_to_start.
+        '''
         self.frame = np.zeros([self.size, self.size])
         # self.ronchigram.start_playing()
         # print('Acquiring frame')
@@ -138,10 +143,10 @@ class Nion_interface():
         self.frame = temp
         return
 
-    '''
-    function to stop acquisition on the Ronchigram camera.
-    '''
     def stopAcquisition(self):
+        '''
+        function to stop acquisition on the Ronchigram camera.
+        '''
         if self.ronchigram:
             self.ronchigram.stop_playing()
         return

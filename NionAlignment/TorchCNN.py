@@ -5,13 +5,14 @@ import torch.nn.functional as F
 # Customized CNN model, only used for prediction, no function to lock/unlock the convolution base.
 # TODO: check out why the __init__ method is called when import class Net, figure out a possible way to move everything to GPU.
 class Net(Module):
-    '''
-    Input:
-    device: the target device for the pytorch model.
-    dropout: dropout rate for the model, this only changes the training stage.
-    linear_shape: size of the linear layer before the final output.
-    '''
+
     def __init__(self, device, dropout = 0.3, linear_shape = 512):
+        '''
+        Input:
+        device: the target device for the pytorch model.
+        dropout: dropout rate for the model, this only changes the training stage.
+        linear_shape: size of the linear layer before the final output.
+        '''
         super(Net, self).__init__()
         self.device = device
         print(self.device)

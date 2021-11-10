@@ -4,6 +4,7 @@ import threading
 import matplotlib.pyplot as plt
 from os.path import exists
 import os
+import pickle
 
 sys.path.insert(1, 'C:/Users/ASUsers/Downloads/TorchBO/')
 from Nion_interface import Nion_interface
@@ -17,15 +18,13 @@ from botorch.optim import optimize_acqf
 from botorch.acquisition import UpperConfidenceBound
 from botorch.models.transforms.outcome import Standardize
 
-'''
-TODO: Read the default parameter before running optimization.
-TODO: Add option to set to default or set to best seen parameter.
-'''
+# TODO: Read the default parameter before running optimization.
+# TODO: Add option to set to default or set to best seen parameter.
 class BOinterface():
     '''
     Main function that set up the input parameters and run the Bayesian optimization.
     '''
-    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename, exposure_t, remove_buffer, apt_option):
+    def __init__(self, abr_activate, option_standardize, aperture, CNNpath, filename, exposure_t, remove_buffer, scale_option, acq_func_par):
 
         # setup basic parameters
         self.ndim = sum(abr_activate)            # number of variable parameters
@@ -36,18 +35,19 @@ class BOinterface():
         self.option_standardize = option_standardize
         self.CNNoption = 1
         self.abr_activate = self.abr_activate
-        self.apt_option = apt_option        # option to determine whether normalize with aperture considered, 0 for not considering aperture
+        self.scale_option = scale_option        # option to determine whether normalize with aperture considered, 0 for not considering aperture
         # self.device = ("cuda" if torch.cuda.is_available() else "cpu")
         # self.device = torch.device('cuda:1')   # possible command to select from multiple GPUs
         self.device = "cpu"                 # hard coded to cpu for now, need to find a way to move all the model weights to the desired device
-        CNNpath = CNNpath 
+        self.acq_func_par = acq_func_par
+        self.CNNpath = CNNpath 
 
         # initialize the interface that talks to Nion swift.
         self.Nion = Nion_interface(act_list = abr_activate, readDefault = True, detectCenter = True, exposure_t = exposure_t, remove_buffer = remove_buffer)
         self.default = self.Nion.default
         
         # initialize the CNN model used to run predictions.
-        self.model = self.loadCNNmodel(CNNpath)
+        self.model = self.loadCNNmodel(self.CNNpath)
         self.model.eval()
 
         # initialize the lists to save the results
@@ -59,33 +59,32 @@ class BOinterface():
         # readin the name for saving the results
         self.filename = filename
 
-    '''
-    Function to load CNN model from path.
-    Input: path to the torch model.
-    TODO: modeify linear_shape to automatically detected linear layer shape.
-    '''
+    
     def loadCNNmodel(self, path):
-        model = Net(device = self.device, linear_shape = 256).to(self.device)
+        '''
+        Function to load CNN model from path.
+        Input: path to the torch model.
+        '''
+        model = Net(device = self.device, linear_shape = 256).to(self.device) # TODO: modify linear_shape to automatically detected linear layer shape.
         state_dict = torch.load(path, map_location = self.device)
         model.load_state_dict(state_dict)
         return model
 
-    '''
-    Function to set objective based on CNN prediction. Return the raw frame without any rescale.
-    Input: 128x128 numpy array as the input to CNN.
-    TODO: change the limit in the aperture generator from 50 to a variable
-    '''
     def getCNNprediction(self):
+        '''
+        Function to set objective based on CNN prediction. Return the raw frame without any rescale.
+        Input: 128x128 numpy array as the input to CNN.
+        '''
         acquire_thread = threading.Thread(target = self.Nion.acquire_frame())
         acquire_thread.start()
         frame_array = self.Nion.frame
         frame_array_raw = self.Nion.frame
-        if self.apt_option:
-            frame_array = self.Nion.scale_range_aperture(frame_array, 0, 1, 50, self.apt_option)
+        if self.scale_option:
+            frame_array = self.Nion.scale_range_aperture(frame_array, 0, 1, self.aperture[0], self.scale_option)
         else:
             frame_array = self.Nion.scale_range(frame_array, 0, 1)
-        if self.aperture != 0:
-            frame_array = frame_array * self.Nion.aperture_generator(128, 50, self.aperture)
+        if self.aperture[1] != 0:
+            frame_array = frame_array * self.Nion.aperture_generator(128, self.aperture[0], self.aperture[1])
         new_channel = np.zeros(frame_array.shape)
         img_stack = np.dstack((frame_array, new_channel, new_channel))
         x = torch.tensor(np.transpose(img_stack)).to(self.device)
@@ -93,14 +92,12 @@ class BOinterface():
         prediction = self.model(x)
         return frame_array_raw, 1 - prediction[0][0].cpu().detach().numpy()
 
-    '''
-    # Function that initialize the GP and MLL model, with n random starting points.
-    # Input:
-    # n: int, number of datapoints to gerate
-    '''
-
     def initialize_GP(self, n):
-
+        '''
+        Function that initialize the GP and MLL model, with n random starting points.
+        Input:
+        n: int, number of datapoints to gerate
+        '''
         # generate random initial training data
         self.train_X = torch.rand(n, self.ndim, device = self.device, dtype = self.dtype)
         output_y = []
@@ -130,19 +127,18 @@ class BOinterface():
         self.n_measurement += n
         return
 
-    '''
-    Function to run one iteration on the Bayesian optimization and update both gp and mll.
-    TODO: refine the print(new_x) part, convert it to physical units.
-    '''
     def run_iteration(self):
+        '''
+        Function to run one iteration on the Bayesian optimization and update both gp and mll.
+        '''
         fit_gpytorch_model(self.mll)
-        UCB = UpperConfidenceBound(self.gp, beta = 2)  
+        UCB = UpperConfidenceBound(self.gp, beta = self.acq_func_par[1])  # TODO: add more options of acquisition functions.
         # TODO: Check the option here in the optimize_acqf  
         candidate, acq_value = optimize_acqf(
             UCB, bounds=self.bounds, q = 1, num_restarts=5, raw_samples=20,
         )
         new_x = candidate.detach()
-        print(new_x.cpu().detach().numpy())
+        print(new_x.cpu().detach().numpy()) # TODO: convert the output to physical units.
         
         self.Nion.setX(np.array(new_x[0]))
         result = self.getCNNprediction()
@@ -166,30 +162,35 @@ class BOinterface():
             self.gp = SingleTaskGP(self.train_X, self.train_Y)
         self.mll = ExactMarginalLogLikelihood(self.gp.likelihood, self.gp)
 
-    '''
-    Function to run the full Bayesian optimization for niter iterations.
-    Input:
-    niter: int, number of iterations to run
-    '''
-
     def run_optimization(self, niter):
+        '''
+        Function to run the full Bayesian optimization for niter iterations.
+        Input:
+        niter: int, number of iterations to run
+        '''
         for i in range(niter):
             self.run_iteration()
             print(f"Iteraton number {i}, current value {self.train_Y[-1].cpu().detach().numpy()}, current best seen value {self.best_observed_value[-1]}")
         self.n_measurement += niter
         return
 
-    '''
-    Function ot save the process and results of Bayesian optimization.
-    TODO: Save all the metadata being used in the BO. Acquistion function parameters,
-    '''
     def saveresults(self):
+        '''
+        Function ot save the process and results of Bayesian optimization.
+        '''
         train_X = self.train_X.cpu().detach().numpy()
         train_Y = self.train_Y.cpu().detach().numpy()
         if not exists(self.filename):
             os.mkdir(self.filename)
         index = 0
         temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
+        metadata = {}
+        metadata['abr_activate'] = self.abr_activate
+        metadata['option_standardize'] = self.option_standardize
+        metadata['aperture'] = self.aperture
+        metadata['CNNpath'] = self.CNNpath
+        metadata['acq_func'] = self.acq_func_par
+        metadata['scale_option'] = self.scale_option
         while exists(temp):
             index += 1
             temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
@@ -197,17 +198,20 @@ class BOinterface():
         np.save(self.filename + '/X_' + "{:02d}".format(index) + '.npy', train_X)
         np.save(self.filename + '/Y_' + "{:02d}".format(index) + '.npy', train_Y)
         np.save(self.filename + '/Ronchigram_' + "{:02d}".format(index) + '.npy', np.array(self.ronchigram_list))
+        with open(self.filename + '/Metadata_' + "{:02d}".format(index) + '.pkl', 'wb') as f:
+            pickle.dump(metadata, f)
         return
 
-    '''
-    Function to plot the Bayesian optimization results.
-    TODO: Possibly add the model's prediction of a single dimension.
-    Input: 
-    best_observed_value: numpy array saving the best observed value for each iteration.
-    best_seen_ronchigran: 2D numpy array saving the ronchigram that correspond to the optimized parameter.
 
-    '''
     def plotresults(self):
+        '''
+        Function to plot the Bayesian optimization results.
+        TODO: Possibly add the model's prediction of a single dimension.
+        Input: 
+        best_observed_value: numpy array saving the best observed value for each iteration.
+        best_seen_ronchigran: 2D numpy array saving the ronchigram that correspond to the optimized parameter.
+
+        '''
         niter = len(self.train_Y)
         ninit = len(self.train_Y) - len(self.best_observed_value)
         fig, ax = plt.subplots(3,1,figsize = [7,18])
