@@ -6,7 +6,7 @@ from os.path import exists
 import os
 import pickle
 
-sys.path.insert(1, 'C:/Users/ASUsers/Downloads/TorchBO/')
+sys.path.insert(1, 'C:/Users/ASUser/Downloads/TorchBO/')
 from Nion_interface import Nion_interface
 from TorchCNN import Net
 
@@ -65,8 +65,8 @@ class BOinterface():
         Function to load CNN model from path.
         Input: path to the torch model.
         '''
-        model = Net(device = self.device, linear_shape = 256).to(self.device) # TODO: modify linear_shape to automatically detected linear layer shape.
         state_dict = torch.load(path, map_location = self.device)
+        model = Net(device = self.device, linear_shape = state_dict['fc1.weight'].shape[0]).to(self.device)
         model.load_state_dict(state_dict)
         return model
 
@@ -174,35 +174,43 @@ class BOinterface():
         self.n_measurement += niter
         return
 
-    def saveresults(self):
+    def DataGenerator(self) -> dict:
         '''
-        Function ot save the process and results of Bayesian optimization.
+        function that combines all the collected data and metadata into a single package for saving purpose.
         '''
+        package = {}
+        # save the metadata of BO
+        package['abr_activate'] = self.abr_activate
+        package['option_standardize'] = self.option_standardize
+        package['aperture'] = self.aperture
+        package['CNNpath'] = self.CNNpath
+        package['acq_func'] = self.acq_func_par
+        package['scale_option'] = self.scale_option
+        package['total_measurements'] = self.n_measurement
+        package['abr_limit'] = self.Nion.abr_lim
+
+        # save the observations of BO
         train_X = self.train_X.cpu().detach().numpy()
         train_Y = self.train_Y.cpu().detach().numpy()
+        package['X'] = train_X
+        package['Y'] = train_Y
+        package['Ronchigram'] = np.array(self.ronchigram_list)
+        return package
+
+    def saveresults(self):
+        '''
+        Function ot save the parameters and results of Bayesian optimization.
+        '''
         if not exists(self.filename):
             os.mkdir(self.filename)
         index = 0
-        temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
-        # TODO: add a function to make metadata dictionary, call it right after initialization to save everything.
-        metadata = {}
-        metadata['abr_activate'] = self.abr_activate
-        metadata['option_standardize'] = self.option_standardize
-        metadata['aperture'] = self.aperture
-        metadata['CNNpath'] = self.CNNpath
-        metadata['acq_func'] = self.acq_func_par
-        metadata['scale_option'] = self.scale_option
-        metadata['total_measurements'] = self.n_measurement
-        metadata['abr_limit'] = self.Nion.abr_lim
+        temp = self.filename + '/Results_' + "{:02d}".format(index) + '.npy'
         while exists(temp):
             index += 1
-            temp = self.filename + '/X_' + "{:02d}".format(index) + '.npy'
-
-        np.save(self.filename + '/X_' + "{:02d}".format(index) + '.npy', train_X)
-        np.save(self.filename + '/Y_' + "{:02d}".format(index) + '.npy', train_Y)
-        np.save(self.filename + '/Ronchigram_' + "{:02d}".format(index) + '.npy', np.array(self.ronchigram_list))
-        with open(self.filename + '/Metadata_' + "{:02d}".format(index) + '.pkl', 'wb') as f:
-            pickle.dump(metadata, f)
+            temp = self.filename + '/Results_' + "{:02d}".format(index) + '.npy'
+        data_package = self.DataGenerator()
+        with open(self.filename + '/Results_' + "{:02d}".format(index) + '.pkl', 'wb') as f:
+            pickle.dump(data_package, f)
         return
 
 
