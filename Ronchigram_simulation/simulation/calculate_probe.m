@@ -1,0 +1,23 @@
+function [psi_p, probe] = calculate_probe(chi0,imdim, simdim, aperture_size, shifts)
+    al_max = simdim * 10^-3; 
+    al_vec = (linspace(-al_max,al_max,imdim));
+    [alxx,alyy] = meshgrid(al_vec,al_vec);
+    al_rr = sqrt(alxx.^2 + alyy.^2);
+
+
+    obj_ap_r = aperture_size.*10^-3;
+    obj_ap    = al_rr<= obj_ap_r;    
+    if ~isequal(shifts,[0 0])
+        obj_ap = imtranslate(obj_ap,shifts);
+    end
+    expchi0 = exp(-1i * chi0).*obj_ap;          % Apply Objectived Ap
+    % bandpass filter expchi0 will cause uneven background in the final
+    % Ronchigram, and won't remove the stripes artifact
+    
+%     window = fspecial('gaussian',[1024,1024],100);
+%     expchi0 = expchi0 .* window;
+%     psi_p = fft2(expchi0);                     % Probe Wavefunction
+    psi_p = ifft2(expchi0);                     % cz, should be inverse transform from k space wavefunction to r space?
+    % see Kirkland 2020 eq (5.48) for the usage of ifft2
+    probe = abs(ifftshift(psi_p)).^2;
+end

@@ -8,8 +8,6 @@ import time
 abr_activate = [True, True, True, True, True, False, False, False, False, False, False, False]   # activated aberration coefficients
 # network to correct up to C23 by minimizing emittance.
 CNNpath_1 = 'C:/Users/ASUser/Downloads/TorchModels/Test18_Nion_2ndorder_no1stOrder_45mradApt_50mradLimit_emit_Adam_attempt00.pt' 
-# network to correct first order by minimizing defocus.
-CNNpath_2 = 'C:/Users/ASUser/Downloads/TorchModels/Test18_Nion_defocus_45mradApt_50mradLimit_emit+defocus_Adam_attempt05.pt' 
 filename = 'C:/Users/ASUser/Downloads/2ndorder_attempt00_45mrad_250ms_standardize_removebuffer_scale'
 aperture = (50, 0) # tuple for acquisition limit and aperture size
 option_standardize = False
@@ -42,6 +40,8 @@ Nion_BO.run_optimization(n_optimize)
 Nion_BO.saveresults()
 
 # step 2: refine first order aberrations by minimizing defocus.
+# network to correct first order by minimizing defocus.
+CNNpath_2 = 'C:/Users/ASUser/Downloads/TorchModels/Test18_Nion_defocus_45mradApt_50mradLimit_emit+defocus_Adam_attempt05.pt' 
 abr_activate = [True, True, True, False, False, False, False, False, False, False, False, False]
 filename = 'C:/Users/ASUsers/Downloads/2ndorder_attempt00_45mrad_250ms_standardize_removebuffer_scale_stage2'
 Nion_BO = BOinterface(abr_activate, option_standardize = option_standardize, aperture = aperture, CNNpath = CNNpath_2, 
